@@ -5,3 +5,4 @@ sqlalchemy
 python-dotenv
 gunicorn
 Flask-SQLAlchemy
+pytz
