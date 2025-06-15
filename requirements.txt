@@ -4,3 +4,4 @@ schedule
 sqlalchemy
 python-dotenv
 gunicorn
+flask_sqlalchemy
