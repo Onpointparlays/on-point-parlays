@@ -1,0 +1,50 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 60px 20px;">
+  <h2 style="color: #FFD700; font-size: 28px;">🔥 Free Pick of the Day</h2>
+  <div style="border: 2px solid #FFD700; padding: 25px; display: inline-block; margin-top: 10px; border-radius: 10px; background: #111;">
+    <h3 style="color: #00ffaa; margin-bottom: 10px;">MLB Free Pick:</h3>
+    <p style="font-size: 18px;">Yankees to win (Moneyline)</p>
+    <p style="color: gold; font-size: 14px;">💡 Odds: +115 – FanDuel</p>
+    <p style="font-size: 13px; color: #aaa;">Next Free Pick drops in:</p>
+    <p id="countdown" style="color: #00ffaa; font-size: 18px;">4h 0m 0s</p>
+  </div>
+</div>
+
+<div style="text-align: center; padding: 60px 20px;">
+  <h1 style="color: #FFD700;">Welcome to On Point Parlays</h1>
+  <p style="max-width: 700px; margin: auto; font-size: 18px; color: #ccc;">
+    On Point Parlays is your premium destination for smart, confident, data-driven betting picks across the NBA, NFL, MLB, and more — powered by the Black Ledger Engine.
+  </p>
+  <p style="max-width: 700px; margin: 20px auto; font-size: 16px; color: #aaa;">
+    Start by visiting the <strong style="color: #FFD700;">Picks</strong> page to explore handpicked parlays organized by risk level: <em>Safe</em>, <em>Mid</em>, and <em>High Risk</em>. If you're logged in and subscribed, you'll unlock full visibility of today's top picks with real sportsbook odds.
+  </p>
+  <p style="font-size: 14px; color: gray;">
+    New picks drop at <strong style="color:#FFD700;">10AM, 3PM, and 6PM</strong> daily — all based on your edge.
+  </p>
+</div>
+
+<script>
+  function updateCountdown() {
+    const targetTime = new Date();
+    targetTime.setHours(10, 0, 0, 0); // Next Free Pick at 10:00 AM
+
+    const now = new Date();
+    if (now > targetTime) {
+      targetTime.setDate(targetTime.getDate() + 1); // move to next day
+    }
+
+    const diff = targetTime - now;
+    const hours = Math.floor(diff / 1000 / 60 / 60);
+    const minutes = Math.floor((diff / 1000 / 60) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    document.getElementById("countdown").innerText =
+      `${hours}h ${minutes}m ${seconds}s`;
+  }
+
+  setInterval(updateCountdown, 1000);
+  updateCountdown();
+</script>
+{% endblock %}

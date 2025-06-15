@@ -1,0 +1,9 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div style="text-align: center; padding: 60px;">
+    <h1 style="color: #FFD700;">🔒 Picks Locked</h1>
+    <p style="color: #ccc;">You must be <strong>logged in</strong> to view today’s expert picks.</p>
+    <a href="{{ url_for('home') }}" style="color: #FFD700;">Return to Home</a>
+</div>
+{% endblock %}
