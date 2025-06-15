@@ -1,0 +1,6 @@
+flask
+requests
+schedule
+sqlalchemy
+python-dotenv
+gunicorn
