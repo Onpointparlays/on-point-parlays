@@ -151,25 +151,25 @@ class BlackLedgerEngine:
         elif 70 <= confidence < 80:
             return "Mid"
         elif 60 <= confidence < 70:
-            return "High Risk"
+            return "High"
         else:
             return None
 
     def save_pick(self, player_name, game, line, expected, tier, confidence, context):
         reason = f"{context['reason']} Line: {line}, Our Projection: {expected}."
         new_pick = Pick(
-            sport="NBA",
-            pick_type="Player Prop",
+            sport="nba",  # ✅ Lowercase for HTML compatibility
             pick_text=f"{player_name} OVER {line} points",
+            summary=reason,
             tier=tier,
             confidence=confidence,
-            hit_chance=confidence,
-            summary=reason
+            hit_chance=f"{confidence}%",
+            sportsbook="PrizePicks",
+            odds=f"{line}"
         )
         db.session.add(new_pick)
         db.session.commit()
         print(f"✅ Saved {tier} pick: {player_name} over {line} – {confidence}%")
-
 
 # === Run Engine with App Context ===
 if __name__ == '__main__':
