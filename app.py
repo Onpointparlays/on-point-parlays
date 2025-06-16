@@ -8,11 +8,8 @@ import os
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
-# ✅ Shared database path for Render vs local
-if os.environ.get("RENDER"):
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+# ✅ Fixed: Use unified path to the database
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/users.db'
 
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
