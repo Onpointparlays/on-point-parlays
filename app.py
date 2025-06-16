@@ -8,11 +8,8 @@ import os
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
-# ✅ Use proper DB path for local and Render
-if os.environ.get("RENDER"):
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+# ✅ Reliable DB path (works locally and on Render)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/users.db'
 
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
@@ -109,7 +106,7 @@ def cleanup_mocks():
         for pick in mock_picks:
             db.session.delete(pick)
         db.session.commit()
-        return f"✅ Deleted {len(mock_picks)} mock picks from Render DB."
+        return f"✅ Deleted {len(mock_picks)} mock picks from DB."
 
 @app.route('/test-refresh')
 def test_refresh():
