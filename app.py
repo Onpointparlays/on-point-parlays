@@ -11,10 +11,8 @@ app.secret_key = 'your_secret_key_here'
 # ========================
 # DATABASE CONFIGURATION
 # ========================
-if os.environ.get("RENDER"):
-    db_path = '/opt/render/project/src/instance/users.db'
-else:
-    db_path = 'instance/users.db'
+basedir = os.path.abspath(os.path.dirname(__file__))
+db_path = os.path.join(basedir, 'instance', 'users.db')
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.permanent_session_lifetime = timedelta(days=7)
@@ -125,3 +123,4 @@ if __name__ == '__main__':
     os.makedirs('instance', exist_ok=True)
     with app.app_context():
         db.create_all()
+    app.run(debug=True)
