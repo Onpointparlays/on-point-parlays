@@ -19,6 +19,13 @@ app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
 
 # ========================
+# INIT DB ON FIRST REQUEST (for Render)
+# ========================
+@app.before_first_request
+def create_tables():
+    db.create_all()
+
+# ========================
 # ROUTES
 # ========================
 @app.route('/')
