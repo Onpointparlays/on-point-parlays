@@ -1,20 +1,13 @@
-from flask import Flask
-from datetime import datetime
 import requests
-import pytz
+from datetime import datetime
 from models import db, Pick
+import pytz
+from app import app
 
-# ==== SETUP FLASK APP FOR CONTEXT ====
-app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db' if __name__ == '__main__' else 'sqlite:///users.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db.init_app(app)
-
-# ==== ENGINE CLASS ====
 class BlackLedgerEngine:
     def __init__(self):
-        self.odds_api_key = 'YOUR_ODDS_API_KEY'
-        self.weather_api_key = 'YOUR_WEATHER_API_KEY'
+        self.odds_api_key = '67428de6e7860f6c46fd3fba43b8d395'  # ✅ Your valid API key
+        self.weather_api_key = 'YOUR_WEATHER_API_KEY'  # You can replace this if needed
         self.used_api_calls = 0
         self.api_limit = 500
         self.timezone = pytz.timezone('US/Central')
@@ -62,6 +55,7 @@ class BlackLedgerEngine:
                         self.save_pick(player['name'], game, line, expected_value, tier, confidence, matchup_context)
 
     def fetch_today_games(self):
+        # Replace with real API (BallDontLie or another)
         return [
             {
                 "home_team": "Lakers",
@@ -83,15 +77,13 @@ class BlackLedgerEngine:
 
         self.used_api_calls += 1
         url = f"https://api.the-odds-api.com/v4/sports/basketball_nba/odds/?apiKey={self.odds_api_key}&regions=us&markets=player_points"
-        try:
-            response = requests.get(url)
-            if response.status_code == 200:
-                return response.json()
-            else:
-                print("❌ Error fetching odds:", response.text)
-        except Exception as e:
-            print("❌ Request error:", e)
-        return []
+        response = requests.get(url)
+
+        if response.status_code == 200:
+            return response.json()
+        else:
+            print("🚨 Error fetching odds:", response.text)
+            return []
 
     def get_weather(self, team):
         return {"condition": "Clear", "temp": 72}
@@ -151,10 +143,10 @@ class BlackLedgerEngine:
 
     def save_pick(self, player_name, game, line, expected, tier, confidence, context):
         reason = f"{context['reason']} Line: {line}, Our Projection: {expected}."
-        try:
+        with app.app_context():
             new_pick = Pick(
                 sport="NBA",
-                pick_type="Player Prop",
+                bet_type="Player Prop",
                 pick_text=f"{player_name} OVER {line} points",
                 tier=tier,
                 confidence=confidence,
@@ -164,11 +156,3 @@ class BlackLedgerEngine:
             db.session.add(new_pick)
             db.session.commit()
             print(f"✅ Saved {tier} pick: {player_name} over {line} – {confidence}%")
-        except Exception as e:
-            print("❌ Failed to save pick:", e)
-
-# ==== RUN ENTRY POINT ====
-if __name__ == '__main__':
-    with app.app_context():
-        engine = BlackLedgerEngine()
-        engine.generate_nba_picks()
