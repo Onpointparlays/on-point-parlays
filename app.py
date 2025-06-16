@@ -1,16 +1,15 @@
 from flask import Flask, render_template, request, redirect, session, url_for, flash
 from models import db, User, Pick
 from werkzeug.security import generate_password_hash, check_password_hash
-from apscheduler.schedulers.background import BackgroundScheduler
-from pytz import timezone
 from datetime import datetime, timedelta
-import atexit
 
 from generate_picks import generate_black_ledger_picks
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+# ✅ Shared database path for cron + web service
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
 
@@ -28,7 +27,6 @@ def picks():
         return render_template('locked.html')
     picks = Pick.query.order_by(Pick.created_at.desc()).all()
 
-    # Group picks by sport and tier
     picks_by_sport = {
         'nba': {'safe': [], 'mid': [], 'high': []},
         'nfl': {'safe': [], 'mid': [], 'high': []},
@@ -104,16 +102,10 @@ def profile():
 # 🧠 BLACK LEDGER ENGINE
 # ========================
 
-def run_black_ledger_engine():
-    print(f"[{datetime.now()}] 🧠 Running Black Ledger Engine...")
+@app.route('/test-refresh')
+def test_refresh():
     generate_black_ledger_picks()
-
-scheduler = BackgroundScheduler(timezone=timezone('US/Central'))
-scheduler.add_job(run_black_ledger_engine, 'cron', hour=10, minute=0, id='morning_update')
-scheduler.add_job(run_black_ledger_engine, 'cron', hour=15, minute=0, id='afternoon_update')
-scheduler.add_job(run_black_ledger_engine, 'cron', hour=18, minute=0, id='evening_update')
-scheduler.start()
-atexit.register(lambda: scheduler.shutdown())
+    return "Manual refresh completed."
 
 # ========================
 # INIT

@@ -1,7 +1,14 @@
 import requests
 from datetime import datetime
+from flask import Flask
 from models import db, Pick
 from pytz import utc
+
+# ✅ Create standalone Flask app for DB access
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
+app.app_context().push()
+db.init_app(app)
 
 API_KEY = "e3482b5a5079c3f265cdd620880a610d"
 BASE_URL = "https://api.the-odds-api.com/v4/sports"
@@ -47,7 +54,10 @@ def generate_black_ledger_picks():
             continue
 
         events = response.json()
-        upcoming = [e for e in events if datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc) > datetime.utcnow().replace(tzinfo=utc)]
+        upcoming = [
+            e for e in events
+            if "commence_time" in e and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc) > datetime.utcnow().replace(tzinfo=utc)
+        ]
 
         if not upcoming:
             print(f"🕒 {sport_name} currently in offseason or no valid games.")
@@ -56,9 +66,15 @@ def generate_black_ledger_picks():
         for tier, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
             for i in range(count):
                 event = upcoming[i % len(upcoming)]
+
+                if "teams" not in event or "home_team" not in event:
+                    print(f"⚠️ Skipping invalid event (missing teams/home_team): {event}")
+                    continue
+
                 home = event["home_team"]
-                away = [team for team in event["teams"] if team != home][0]
-                team_pick = home  # Default to home for now
+                away_candidates = [team for team in event["teams"] if team != home]
+                away = away_candidates[0] if away_candidates else "Unknown"
+                team_pick = home
 
                 sportsbook, odds = fetch_best_odds(event["id"], "h2h")
 
@@ -76,3 +92,8 @@ def generate_black_ledger_picks():
 
         db.session.commit()
         print(f"✅ {sport_name} picks saved.")
+
+# ✅ Manual entry point for cron job
+if __name__ == "__main__":
+    with app.app_context():
+        generate_black_ledger_picks()
