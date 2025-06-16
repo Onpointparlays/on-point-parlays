@@ -119,10 +119,9 @@ def test_refresh():
     return "Manual refresh completed."
 
 # ========================
-# INIT ONLY IF NOT CRON
+# SAFE INIT FOR LOCAL ONLY
 # ========================
 if __name__ == '__main__':
     os.makedirs('instance', exist_ok=True)
     with app.app_context():
         db.create_all()
-    app.run(debug=True)
