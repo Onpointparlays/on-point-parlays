@@ -12,7 +12,7 @@ app.secret_key = 'your_secret_key_here'
 # DATABASE CONFIGURATION
 # ========================
 basedir = os.path.abspath(os.path.dirname(__file__))
-db_path = os.path.join(basedir, 'instance', 'users.db')
+db_path = os.path.join(basedir, 'users.db')  # ✅ Now uses root path, not instance
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.permanent_session_lifetime = timedelta(days=7)
