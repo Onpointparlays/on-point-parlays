@@ -102,6 +102,15 @@ def profile():
         return redirect(url_for('home'))
     return render_template('profile.html', username=session.get('username'))
 
+@app.route('/cleanup-mocks')
+def cleanup_mocks():
+    mock_picks = Pick.query.filter(Pick.summary.contains('mock')).all()
+    for pick in mock_picks:
+        db.session.delete(pick)
+    db.session.commit()
+    return f"✅ Deleted {len(mock_picks)} mock picks from Render DB."
+
+
 @app.route('/test-refresh')
 def test_refresh():
     generate_black_ledger_picks()
