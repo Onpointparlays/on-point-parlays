@@ -8,16 +8,21 @@ import os
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
-# ✅ Reliable DB path (works locally and on Render)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/users.db'
+# ========================
+# DATABASE CONFIGURATION
+# ========================
+if os.environ.get("RENDER"):
+    db_path = '/opt/render/project/src/instance/users.db'
+else:
+    db_path = 'instance/users.db'
 
+app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
 
 # ========================
 # ROUTES
 # ========================
-
 @app.route('/')
 def home():
     return render_template('home.html', now=datetime.now())
@@ -114,11 +119,10 @@ def test_refresh():
     return "Manual refresh completed."
 
 # ========================
-# INIT
+# INIT ONLY IF NOT CRON
 # ========================
-
-with app.app_context():
-    db.create_all()
-
 if __name__ == '__main__':
+    os.makedirs('instance', exist_ok=True)
+    with app.app_context():
+        db.create_all()
     app.run(debug=True)
