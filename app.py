@@ -8,8 +8,12 @@ import os
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
-# ✅ Fixed: Use unified path to the database
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/users.db'
+# ✅ Correct Render-compatible path for SQLite
+if os.environ.get("RENDER"):
+    os.makedirs("/mnt/data", exist_ok=True)  # ensure directory exists
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/users.db'
 
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
@@ -101,7 +105,7 @@ def profile():
 
 @app.route('/cleanup-mocks')
 def cleanup_mocks():
-    with app.app_context():  # ✅ safer on Render
+    with app.app_context():
         mock_picks = Pick.query.filter(Pick.summary.contains('mock')).all()
         for pick in mock_picks:
             db.session.delete(pick)
@@ -116,7 +120,6 @@ def test_refresh():
 # ========================
 # INIT
 # ========================
-
 with app.app_context():
     db.create_all()
 
