@@ -3,10 +3,14 @@ from datetime import datetime
 from flask import Flask
 from models import db, Pick
 from pytz import utc
+import os
 
-# ✅ Create standalone Flask app for DB access
+# ✅ Set up Flask app + dual DB path for Render/local
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
+if os.environ.get("RENDER"):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 app.app_context().push()
 db.init_app(app)
 
@@ -93,7 +97,7 @@ def generate_black_ledger_picks():
         db.session.commit()
         print(f"✅ {sport_name} picks saved.")
 
-# ✅ Manual entry point for cron job
+# ✅ Manual entry point for testing or cron
 if __name__ == "__main__":
     with app.app_context():
         generate_black_ledger_picks()

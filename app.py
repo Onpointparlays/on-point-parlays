@@ -2,14 +2,18 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from models import db, User, Pick
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
-
 from generate_picks import generate_black_ledger_picks
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
-# ✅ Shared database path for cron + web service
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
+# ✅ Shared database path for Render vs local
+if os.environ.get("RENDER"):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
 
@@ -97,10 +101,6 @@ def profile():
     if not session.get('user_logged_in'):
         return redirect(url_for('home'))
     return render_template('profile.html', username=session.get('username'))
-
-# ========================
-# 🧠 BLACK LEDGER ENGINE
-# ========================
 
 @app.route('/test-refresh')
 def test_refresh():
