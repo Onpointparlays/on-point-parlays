@@ -17,9 +17,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
 
-# ✅ Ensure tables get created on first request (even on Render)
-@app.before_first_request
-def initialize_database():
+# ✅ Create tables immediately (safe for local and Render)
+with app.app_context():
     db.create_all()
 
 # ========================
@@ -121,7 +120,7 @@ def test_refresh():
     return "Manual refresh completed."
 
 # ========================
-# SAFE INIT FOR LOCAL ONLY
+# LOCAL DEV INIT
 # ========================
 if __name__ == '__main__':
     os.makedirs('instance', exist_ok=True)
