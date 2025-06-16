@@ -8,12 +8,11 @@ import os
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
 
-# ✅ Correct Render-compatible path for SQLite
+# ✅ Use proper DB path for local and Render
 if os.environ.get("RENDER"):
-    os.makedirs("/mnt/data", exist_ok=True)  # ensure directory exists
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
 else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///instance/users.db'
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
@@ -120,6 +119,7 @@ def test_refresh():
 # ========================
 # INIT
 # ========================
+
 with app.app_context():
     db.create_all()
 
