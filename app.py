@@ -17,11 +17,9 @@ app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.permanent_session_lifetime = timedelta(days=7)
 db.init_app(app)
 
-# ========================
-# CREATE TABLES ONCE
-# ========================
+# ✅ Ensure tables get created on first request (even on Render)
 @app.before_first_request
-def create_tables():
+def initialize_database():
     db.create_all()
 
 # ========================
