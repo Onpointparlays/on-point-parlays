@@ -104,12 +104,12 @@ def profile():
 
 @app.route('/cleanup-mocks')
 def cleanup_mocks():
-    mock_picks = Pick.query.filter(Pick.summary.contains('mock')).all()
-    for pick in mock_picks:
-        db.session.delete(pick)
-    db.session.commit()
-    return f"✅ Deleted {len(mock_picks)} mock picks from Render DB."
-
+    with app.app_context():  # ✅ safer on Render
+        mock_picks = Pick.query.filter(Pick.summary.contains('mock')).all()
+        for pick in mock_picks:
+            db.session.delete(pick)
+        db.session.commit()
+        return f"✅ Deleted {len(mock_picks)} mock picks from Render DB."
 
 @app.route('/test-refresh')
 def test_refresh():
