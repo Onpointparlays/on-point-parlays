@@ -1,8 +1,9 @@
 import requests
-from datetime import datetime, timedelta  # ✅ FIXED: added timedelta
+from datetime import datetime, timedelta
 from models import db, Pick
 import pytz
 from app import app
+import json  # ✅ Added for cached odds reading
 
 class BlackLedgerEngine:
     def __init__(self):
@@ -70,18 +71,13 @@ class BlackLedgerEngine:
         ]
 
     def fetch_odds(self):
-        if self.used_api_calls >= self.api_limit:
-            print("🚫 API limit reached. Using cached odds.")
-            return []
-
-        self.used_api_calls += 1
-        url = f"https://api.the-odds-api.com/v4/sports/basketball_nba/odds/?apiKey={self.odds_api_key}&regions=us&markets=player_points"
-        response = requests.get(url)
-
-        if response.status_code == 200:
-            return response.json()
-        else:
-            print("🚨 Error fetching odds:", response.text)
+        try:
+            with open("odds_cache.json", "r") as f:
+                cached_data = json.load(f)
+            print("✅ Loaded odds from cache.")
+            return cached_data.get("basketball_nba", {}).get("player_points", [])
+        except Exception as e:
+            print("⚠️ Failed to load cached odds:", e)
             return []
 
     def get_weather(self, team):
