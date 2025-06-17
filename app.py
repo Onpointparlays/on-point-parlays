@@ -6,8 +6,7 @@ from sqlalchemy import func
 import os
 import requests
 import random
-import traceback
-from generate_picks import generate_black_ledger_picks  # Make sure this file exists
+from generate_picks import generate_black_ledger_picks  # ✅ Ensure this function works
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -139,9 +138,20 @@ def generate_picks_now():
         generate_black_ledger_picks()
         return "✅ Picks generated successfully!"
     except Exception as e:
-        error_log = traceback.format_exc()
-        print("🔥 PICK GENERATION FAILED:", error_log)
-        return f"<h3>❌ Error generating picks:</h3><pre>{error_log}</pre>", 500
+        return f"❌ Error: {str(e)}", 500
+
+@app.route('/view-picks')
+def view_picks():
+    with app.app_context():
+        picks = Pick.query.order_by(Pick.created_at.desc()).all()
+        if not picks:
+            return "⚠️ No picks in the database."
+
+        output = "<h2>Current Picks in Database</h2><ul>"
+        for pick in picks:
+            output += f"<li><b>{pick.sport.upper()}</b> | {pick.tier.upper()} | {pick.summary} <br><i>{pick.created_at}</i></li><br>"
+        output += "</ul>"
+        return output
 
 # ========================
 # LOCAL DEV INIT
