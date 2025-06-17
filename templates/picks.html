@@ -1,93 +1,105 @@
-{% extends "layout.html" %}
-{% block content %}
-<h1>Black Ledger Engine Picks</h1>
-<p>Select which sports you'd like to view today:</p>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Today’s Picks - On Point Parlays</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+        body {
+            font-family: 'Orbitron', sans-serif;
+            background-color: #000;
+            color: #fff;
+            margin: 0;
+            padding: 20px;
+        }
 
-<div class="filter-box">
-  <form id="filterForm">
-    {% for sport in ['nba', 'nfl', 'mlb', 'nhl', 'mixed'] %}
-    <label>
-      <input type="checkbox" name="sport" value="{{ sport }}"
-        {% if picks_by_sport[sport].safe or picks_by_sport[sport].mid or picks_by_sport[sport].high %}checked{% endif %}>
-      {{ sport.upper() }}
-    </label>
+        h2 {
+            border-bottom: 2px solid #FFD700;
+            padding-bottom: 5px;
+            margin-top: 40px;
+        }
+
+        .tier-title {
+            color: #FFD700;
+            font-size: 22px;
+            margin: 25px 0 10px;
+        }
+
+        .card {
+            background: #111;
+            border: 1px solid #FFD700;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 15px;
+        }
+
+        .card h3 {
+            margin-top: 0;
+            font-size: 18px;
+            color: #FFD700;
+        }
+
+        .parlay-leg {
+            margin-left: 15px;
+            padding-left: 10px;
+            border-left: 2px solid #FFD700;
+            margin-bottom: 10px;
+        }
+
+        .summary {
+            margin-top: 10px;
+            font-size: 14px;
+            color: #ccc;
+        }
+
+        .divider {
+            height: 2px;
+            background: #FFD700;
+            margin: 30px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔥 Today's Picks</h1>
+
+    {% for sport, tiers in picks_by_sport.items() %}
+        {% set sport_display = sport.upper() %}
+        <h2>{{ sport_display }} Picks</h2>
+
+        {% for tier, picks in tiers.items() %}
+            {% if picks %}
+                <div class="tier-title">{{ tier|capitalize }} Tier</div>
+
+                {% for pick in picks %}
+                    <div class="card">
+                        {% if pick.legs is defined %}
+                            <!-- Parlay Display -->
+                            <h3>🧠 Parlay — {{ pick.bet_type }} | Hit Chance: {{ pick.hit_chance }} | Confidence: {{ pick.confidence }}</h3>
+                            {% for leg in pick.legs %}
+                                <div class="parlay-leg">
+                                    • <strong>{{ leg.team }}</strong> — {{ leg.type }} at {{ leg.odds }}<br>
+                                    <small>{{ leg.summary }}</small>
+                                </div>
+                            {% endfor %}
+                            <div class="summary"><em>{{ pick.summary }}</em></div>
+                            {% if pick.is_mystery %}
+                                <div style="color: cyan; font-weight: bold;">🎩 Mystery Pick</div>
+                            {% endif %}
+                        {% else %}
+                            <!-- Standard Pick Display -->
+                            <h3>{{ pick.pick_text }}</h3>
+                            <div>💡 Confidence: {{ pick.confidence }} | 📈 Hit Chance: {{ pick.hit_chance }}</div>
+                            <div>🏦 {{ pick.sportsbook }} | Odds: {{ pick.odds }}</div>
+                            <div>📊 Smartline: {{ pick.smartline_value }} | Fade: {{ pick.public_fade_value }}</div>
+                            <div class="summary"><em>{{ pick.summary }}</em></div>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endfor %}
+
+        <div class="divider"></div>
     {% endfor %}
-    <br>
-    <button type="submit">Show Picks</button>
-  </form>
-</div>
-
-<hr style="margin: 40px 0;">
-
-{% set sports = [('nba', '🏀 NBA'), ('nfl', '🏈 NFL'), ('mlb', '⚾ MLB'), ('nhl', '🏒 NHL'), ('mixed', '🎯 Mixed')] %}
-
-{% for id, label in sports %}
-<div id="{{ id }}" class="sport-section">
-  <h2 style="color:#FFD700;">{{ label }} Picks</h2>
-  {% set sport_picks = picks_by_sport[id] %}
-  {% set total = sport_picks.safe | length + sport_picks.mid | length + sport_picks.high | length %}
-  {% if total == 0 %}
-  <p style="color: #ccc;">No games available. This sport may currently be in the offseason.</p>
-  {% else %}
-
-  {% for tier_label, tier_class, tier_data in [
-    ('Safe Tier', 'safe', sport_picks.safe),
-    ('Mid Tier', 'mid', sport_picks.mid),
-    ('High Risk', 'high', sport_picks.high)
-  ] %}
-  {% if tier_data %}
-  <div class="card-tier-group">
-    <div class="tier-label {{ tier_class }}">{{ tier_label }}</div>
-    <div class="card-container">
-      {% for pick in tier_data %}
-      <div class="card-wrapper {{ tier_class }}" onclick="flipCard(this)">
-        <div class="card">
-          <div class="card-front">
-            <img src="/static/images/{{ id }}_logo.png" style="height: 160px; margin-bottom: 20px; filter: drop-shadow(0 0 10px #FFD700);">
-            <h2 style="margin: 0;">Hit Chance</h2>
-            <p style="font-size: 32px; font-weight: bold;">{{ pick.hit_chance }}</p>
-          </div>
-          <div class="card-back" style="font-size: 14px; line-height: 1.4;">
-            <strong>🎯 {{ tier_label }} Parlay</strong><br><br>
-            <div style="font-weight: bold;">{{ pick.pick_text|safe }}</div><br>
-            <strong>Summary:</strong><br>
-            <div>{{ pick.summary|safe }}</div><br>
-            💡 <em>Confidence: {{ pick.confidence }}</em><br><br>
-            <hr style="margin: 6px 0; border-color: #444;">
-            <div style="font-size: 13px;">
-              📊 <strong>Smartline Value:</strong> {{ pick.smartline_value }}<br>
-              🙅 <strong>Public Fade Value:</strong> {{ pick.public_fade_value }}
-            </div>
-          </div>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
-  {% endfor %}
-
-  {% endif %}
-</div>
-{% endfor %}
-
-<script>
-function flipCard(el) {
-  el.classList.toggle('flipped');
-}
-
-function filterSections() {
-  const selected = Array.from(document.querySelectorAll('input[name="sport"]:checked')).map(cb => cb.value);
-  document.querySelectorAll('.sport-section').forEach(section => {
-    section.style.display = selected.includes(section.id) ? 'block' : 'none';
-  });
-}
-
-document.getElementById('filterForm').addEventListener('submit', function (e) {
-  e.preventDefault();
-  filterSections();
-});
-
-window.addEventListener('DOMContentLoaded', filterSections);
-</script>
-{% endblock %}
+</body>
+</html>

@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, redirect, session, url_for, flash
-from models import db, User, Pick
+from models import db, User, Pick, BlackLedgerPick
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 import os
 import requests
 import random
-from generate_picks import generate_black_ledger_picks  # ✅ Import real pick generator
+import json
+from generate_picks import generate_black_ledger_picks
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -41,7 +42,9 @@ def picks():
 
     now = datetime.utcnow()
     since = now - timedelta(hours=24)
+
     picks = Pick.query.filter(Pick.created_at >= since).order_by(Pick.created_at.desc()).all()
+    parlays = BlackLedgerPick.query.filter(BlackLedgerPick.created_at >= since).order_by(BlackLedgerPick.created_at.desc()).all()
 
     picks_by_sport = {
         'nba': {'safe': [], 'mid': [], 'high': []},
@@ -56,6 +59,16 @@ def picks():
         tier_key = pick.tier.lower()
         if sport_key in picks_by_sport and tier_key in picks_by_sport[sport_key]:
             picks_by_sport[sport_key][tier_key].append(pick)
+
+    for parlay in parlays:
+        sport_key = parlay.sport.lower()
+        tier_key = parlay.tier.lower()
+        if sport_key in picks_by_sport and tier_key in picks_by_sport[sport_key]:
+            try:
+                parlay.legs = json.loads(parlay.legs)
+            except:
+                parlay.legs = []
+            picks_by_sport[sport_key][tier_key].append(parlay)
 
     return render_template('picks.html', picks_by_sport=picks_by_sport)
 
