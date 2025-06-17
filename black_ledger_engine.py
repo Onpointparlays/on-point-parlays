@@ -3,12 +3,11 @@ from datetime import datetime, timedelta
 from models import db, Pick
 import pytz
 from app import app
-import json  # ✅ Added for cached odds reading
+import json
 
 class BlackLedgerEngine:
     def __init__(self):
         self.odds_api_key = '67428de6e7860f6c46fd3fba43b8d395'
-        self.weather_api_key = 'YOUR_WEATHER_API_KEY'
         self.used_api_calls = 0
         self.api_limit = 500
         self.timezone = pytz.timezone('US/Central')
@@ -66,7 +65,8 @@ class BlackLedgerEngine:
             {
                 "home_team": "Heat",
                 "visitor_team": "Celtics",
-                "id": 456
+                "id": 456,
+                "teams": ["Heat", "Celtics"]
             }
         ]
 
@@ -75,7 +75,7 @@ class BlackLedgerEngine:
             with open("odds_cache.json", "r") as f:
                 cached_data = json.load(f)
             print("✅ Loaded odds from cache.")
-            return cached_data.get("basketball_nba", {}).get("player_points", [])
+            return cached_data.get("basketball_nba_player_points", [])
         except Exception as e:
             print("⚠️ Failed to load cached odds:", e)
             return []
@@ -108,11 +108,17 @@ class BlackLedgerEngine:
         }
 
     def get_sportsbook_line(self, player_name, odds_data):
-        return {
-            "book": "PrizePicks",
-            "line": 21.5,
-            "odds": -119
-        }
+        for game in odds_data:
+            for bookmaker in game.get("bookmakers", []):
+                for market in bookmaker.get("markets", []):
+                    for outcome in market.get("outcomes", []):
+                        if outcome["name"].lower() == player_name.lower():
+                            return {
+                                "book": bookmaker.get("title", "Unknown"),
+                                "line": outcome.get("point", 0),
+                                "odds": outcome.get("price", -110)
+                            }
+        return None
 
     def grade_confidence(self, expected, line, injuries, context):
         difference = expected - line
