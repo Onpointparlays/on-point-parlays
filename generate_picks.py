@@ -13,7 +13,7 @@ if os.environ.get("RENDER"):
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 
-db.init_app(app)  # ✅ Init before context
+db.init_app(app)
 app.app_context().push()
 
 API_KEY = "e3482b5a5079c3f265cdd620880a610d"
@@ -78,8 +78,12 @@ def generate_black_ledger_picks():
             for i in range(count):
                 event = upcoming[i % len(upcoming)]
 
-                if "teams" not in event or "home_team" not in event:
-                    print(f"⚠️ Skipping invalid event: {event}")
+                # ✅ Stronger validation
+                if not all(k in event for k in ("teams", "home_team", "id")):
+                    print(f"⚠️ Skipping event due to missing keys: {event}")
+                    continue
+                if not isinstance(event["teams"], list) or len(event["teams"]) < 2:
+                    print(f"⚠️ Skipping malformed teams list: {event}")
                     continue
 
                 home = event["home_team"]
@@ -98,7 +102,7 @@ def generate_black_ledger_picks():
                     hit_chance="80%",
                     sportsbook=sportsbook,
                     odds=odds,
-                    created_at=datetime.utcnow()  # ✅ ensures /picks will show them
+                    created_at=datetime.utcnow()
                 )
                 db.session.add(pick)
                 pick_count += 1
