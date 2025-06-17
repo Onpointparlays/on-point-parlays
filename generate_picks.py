@@ -6,12 +6,15 @@ from pytz import utc
 import os
 
 app = Flask(__name__)
+
+# ✅ Shared DB path across all Render services
 if os.environ.get("RENDER"):
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
+
+db.init_app(app)  # ✅ Init before context
 app.app_context().push()
-db.init_app(app)
 
 API_KEY = "e3482b5a5079c3f265cdd620880a610d"
 BASE_URL = "https://api.the-odds-api.com/v4/sports"
@@ -95,7 +98,7 @@ def generate_black_ledger_picks():
                     hit_chance="80%",
                     sportsbook=sportsbook,
                     odds=odds,
-                    created_at=datetime.utcnow()  # ✅ CRITICAL LINE ADDED
+                    created_at=datetime.utcnow()  # ✅ ensures /picks will show them
                 )
                 db.session.add(pick)
                 pick_count += 1
@@ -103,7 +106,7 @@ def generate_black_ledger_picks():
         db.session.commit()
         print(f"✅ {sport_name} picks saved at {datetime.utcnow()} UTC. Total picks: {pick_count}")
 
-# ✅ Manual entry point
+# ✅ Manual trigger
 if __name__ == "__main__":
     with app.app_context():
         generate_black_ledger_picks()
