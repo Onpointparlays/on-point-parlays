@@ -131,6 +131,13 @@ def reset_db():
         db.create_all()
     return "✅ Database reset successfully!"
 
+# ✅ MANUAL PICK GENERATOR ROUTE
+@app.route('/generate-picks-now')
+def generate_picks_now():
+    from generate_picks import generate_black_ledger_picks
+    generate_black_ledger_picks()
+    return "✅ Smartline 80 picks generated manually."
+
 # ========================
 # LOCAL DEV INIT
 # ========================
