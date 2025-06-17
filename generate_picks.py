@@ -5,7 +5,6 @@ from models import db, Pick
 from pytz import utc
 import os
 
-# ✅ Set up Flask app + dual DB path for Render/local
 app = Flask(__name__)
 if os.environ.get("RENDER"):
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
@@ -29,6 +28,7 @@ def fetch_best_odds(event_id, market):
     response = requests.get(url)
 
     if response.status_code != 200:
+        print(f"❌ Failed to fetch odds for event {event_id}: {response.text}")
         return "Unavailable", "N/A"
 
     data = response.json()
@@ -48,13 +48,13 @@ def fetch_best_odds(event_id, market):
 
 def generate_black_ledger_picks():
     for sport_key, sport_name in SPORTS.items():
-        print(f"📘 Checking {sport_name}...")
+        print(f"📘 Checking {sport_name} games...")
 
         url = f"{BASE_URL}/{sport_key}/events?apiKey={API_KEY}&regions=us&markets=h2h,totals,spreads"
         response = requests.get(url)
 
         if response.status_code != 200:
-            print(f"❌ Failed to fetch {sport_name} games.")
+            print(f"❌ Failed to fetch {sport_name} games: {response.text}")
             continue
 
         events = response.json()
@@ -63,16 +63,20 @@ def generate_black_ledger_picks():
             if "commence_time" in e and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc) > datetime.utcnow().replace(tzinfo=utc)
         ]
 
+        print(f"⏳ {len(upcoming)} upcoming {sport_name} games found.")
+
         if not upcoming:
-            print(f"🕒 {sport_name} currently in offseason or no valid games.")
+            print(f"🕒 No valid games found for {sport_name}. Might be offseason.")
             continue
+
+        pick_count = 0
 
         for tier, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
             for i in range(count):
                 event = upcoming[i % len(upcoming)]
 
                 if "teams" not in event or "home_team" not in event:
-                    print(f"⚠️ Skipping invalid event (missing teams/home_team): {event}")
+                    print(f"⚠️ Skipping invalid event: {event}")
                     continue
 
                 home = event["home_team"]
@@ -90,14 +94,16 @@ def generate_black_ledger_picks():
                     confidence="A",
                     hit_chance="80%",
                     sportsbook=sportsbook,
-                    odds=odds
+                    odds=odds,
+                    created_at=datetime.utcnow()  # ✅ CRITICAL LINE ADDED
                 )
                 db.session.add(pick)
+                pick_count += 1
 
         db.session.commit()
-        print(f"✅ {sport_name} picks saved.")
+        print(f"✅ {sport_name} picks saved at {datetime.utcnow()} UTC. Total picks: {pick_count}")
 
-# ✅ Manual entry point for testing or cron
+# ✅ Manual entry point
 if __name__ == "__main__":
     with app.app_context():
         generate_black_ledger_picks()
