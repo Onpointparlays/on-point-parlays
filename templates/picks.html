@@ -4,149 +4,90 @@
 <p>Select which sports you'd like to view today:</p>
 
 <div class="filter-box">
-    <form id="filterForm">
-        <label><input type="checkbox" name="sport" value="nba" {% if picks_by_sport['nba'].safe or picks_by_sport['nba'].mid or picks_by_sport['nba'].high %}checked{% endif %}> NBA</label>
-        <label><input type="checkbox" name="sport" value="nfl" {% if picks_by_sport['nfl'].safe or picks_by_sport['nfl'].mid or picks_by_sport['nfl'].high %}checked{% endif %}> NFL</label>
-        <label><input type="checkbox" name="sport" value="mlb" {% if picks_by_sport['mlb'].safe or picks_by_sport['mlb'].mid or picks_by_sport['mlb'].high %}checked{% endif %}> MLB</label>
-        <label><input type="checkbox" name="sport" value="nhl" {% if picks_by_sport['nhl'].safe or picks_by_sport['nhl'].mid or picks_by_sport['nhl'].high %}checked{% endif %}> NHL</label>
-        <label><input type="checkbox" name="sport" value="mixed" {% if picks_by_sport['mixed'].safe or picks_by_sport['mixed'].mid or picks_by_sport['mixed'].high %}checked{% endif %}> Mixed</label>
-        <br>
-        <button type="submit">Show Picks</button>
-    </form>
+  <form id="filterForm">
+    {% for sport in ['nba', 'nfl', 'mlb', 'nhl', 'mixed'] %}
+    <label>
+      <input type="checkbox" name="sport" value="{{ sport }}"
+        {% if picks_by_sport[sport].safe or picks_by_sport[sport].mid or picks_by_sport[sport].high %}checked{% endif %}>
+      {{ sport.upper() }}
+    </label>
+    {% endfor %}
+    <br>
+    <button type="submit">Show Picks</button>
+  </form>
 </div>
 
 <hr style="margin: 40px 0;">
 
-{% set sports = [
-    ('nba', '🏀 NBA'),
-    ('nfl', '🏈 NFL'),
-    ('mlb', '⚾ MLB'),
-    ('nhl', '🏒 NHL'),
-    ('mixed', '🎯 Mixed')
-] %}
+{% set sports = [('nba', '🏀 NBA'), ('nfl', '🏈 NFL'), ('mlb', '⚾ MLB'), ('nhl', '🏒 NHL'), ('mixed', '🎯 Mixed')] %}
 
 {% for id, label in sports %}
 <div id="{{ id }}" class="sport-section">
-    <h2 style="color:#FFD700;">{{ label }} Picks</h2>
+  <h2 style="color:#FFD700;">{{ label }} Picks</h2>
+  {% set sport_picks = picks_by_sport[id] %}
+  {% set total = sport_picks.safe | length + sport_picks.mid | length + sport_picks.high | length %}
+  {% if total == 0 %}
+  <p style="color: #ccc;">No games available. This sport may currently be in the offseason.</p>
+  {% else %}
 
-    {% set sport_picks = picks_by_sport[id] %}
-    {% set total = sport_picks.safe | length + sport_picks.mid | length + sport_picks.high | length %}
-    {% if total == 0 %}
-        <p style="color: #ccc;">No games available. This sport may currently be in the offseason.</p>
-    {% else %}
-
-        <!-- SAFE -->
-        {% if sport_picks.safe %}
-        <div class="card-tier-group">
-            <div class="tier-label safe">Safe Tier</div>
-            <div class="card-container">
-                {% for pick in sport_picks.safe %}
-                <div class="card-wrapper safe" onclick="flipCard(this)">
-                    <div class="card">
-                        <div class="card-front">
-                            <img src="/static/images/{{ id }}_logo.png" style="height: 180px; margin-bottom: 25px; filter: drop-shadow(0 0 10px #FFD700);">
-                            <h2>Hit Chance</h2>
-                            <p style="font-size: 38px; font-weight: bold;">{{ pick.hit_chance }}%</p>
-                        </div>
-                        <div class="card-back">
-                            <strong>🟩 Safe Tier Parlay</strong><br><br>
-                            {{ pick.pick_text|safe }}<br><br>
-                            <strong>Summary:</strong><br>
-                            {{ pick.summary|safe }}<br><br>
-                            💡 <em>Confidence: {{ pick.confidence }}</em><br>
-                            <hr style="margin: 10px 0; border-color: #444;">
-                            📊 <strong>Smartline Value:</strong> {{ pick.smartline_value }}<br>
-                            🙅 <strong>Public Fade Value:</strong> {{ pick.public_fade_value }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
+  {% for tier_label, tier_class, tier_data in [
+    ('Safe Tier', 'safe', sport_picks.safe),
+    ('Mid Tier', 'mid', sport_picks.mid),
+    ('High Risk', 'high', sport_picks.high)
+  ] %}
+  {% if tier_data %}
+  <div class="card-tier-group">
+    <div class="tier-label {{ tier_class }}">{{ tier_label }}</div>
+    <div class="card-container">
+      {% for pick in tier_data %}
+      <div class="card-wrapper {{ tier_class }}" onclick="flipCard(this)">
+        <div class="card">
+          <div class="card-front">
+            <img src="/static/images/{{ id }}_logo.png" style="height: 160px; margin-bottom: 20px; filter: drop-shadow(0 0 10px #FFD700);">
+            <h2 style="margin: 0;">Hit Chance</h2>
+            <p style="font-size: 32px; font-weight: bold;">{{ pick.hit_chance }}</p>
+          </div>
+          <div class="card-back" style="font-size: 14px; line-height: 1.4;">
+            <strong>🎯 {{ tier_label }} Parlay</strong><br><br>
+            <div style="font-weight: bold;">{{ pick.pick_text|safe }}</div><br>
+            <strong>Summary:</strong><br>
+            <div>{{ pick.summary|safe }}</div><br>
+            💡 <em>Confidence: {{ pick.confidence }}</em><br><br>
+            <hr style="margin: 6px 0; border-color: #444;">
+            <div style="font-size: 13px;">
+              📊 <strong>Smartline Value:</strong> {{ pick.smartline_value }}<br>
+              🙅 <strong>Public Fade Value:</strong> {{ pick.public_fade_value }}
             </div>
+          </div>
         </div>
-        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+  {% endfor %}
 
-        <!-- MID -->
-        {% if sport_picks.mid %}
-        <div class="card-tier-group">
-            <div class="tier-label mid">Mid Tier</div>
-            <div class="card-container">
-                {% for pick in sport_picks.mid %}
-                <div class="card-wrapper mid" onclick="flipCard(this)">
-                    <div class="card">
-                        <div class="card-front">
-                            <img src="/static/images/{{ id }}_logo.png" style="height: 180px; margin-bottom: 25px; filter: drop-shadow(0 0 10px #FFD700);">
-                            <h2>Hit Chance</h2>
-                            <p style="font-size: 38px; font-weight: bold;">{{ pick.hit_chance }}%</p>
-                        </div>
-                        <div class="card-back">
-                            <strong>🟨 Mid Tier Parlay</strong><br><br>
-                            {{ pick.pick_text|safe }}<br><br>
-                            <strong>Summary:</strong><br>
-                            {{ pick.summary|safe }}<br><br>
-                            💡 <em>Confidence: {{ pick.confidence }}</em><br>
-                            <hr style="margin: 10px 0; border-color: #444;">
-                            📊 <strong>Smartline Value:</strong> {{ pick.smartline_value }}<br>
-                            🙅 <strong>Public Fade Value:</strong> {{ pick.public_fade_value }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-        <!-- HIGH -->
-        {% if sport_picks.high %}
-        <div class="card-tier-group">
-            <div class="tier-label high">High Risk</div>
-            <div class="card-container">
-                {% for pick in sport_picks.high %}
-                <div class="card-wrapper high" onclick="flipCard(this)">
-                    <div class="card">
-                        <div class="card-front">
-                            <img src="/static/images/{{ id }}_logo.png" style="height: 180px; margin-bottom: 25px; filter: drop-shadow(0 0 10px #FFD700);">
-                            <h2>Hit Chance</h2>
-                            <p style="font-size: 38px; font-weight: bold;">{{ pick.hit_chance }}%</p>
-                        </div>
-                        <div class="card-back">
-                            <strong>🔵 High Risk Parlay</strong><br><br>
-                            {{ pick.pick_text|safe }}<br><br>
-                            <strong>Summary:</strong><br>
-                            {{ pick.summary|safe }}<br><br>
-                            💡 <em>Confidence: {{ pick.confidence }}</em><br>
-                            <hr style="margin: 10px 0; border-color: #444;">
-                            📊 <strong>Smartline Value:</strong> {{ pick.smartline_value }}<br>
-                            🙅 <strong>Public Fade Value:</strong> {{ pick.public_fade_value }}
-                        </div>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-
-    {% endif %}
+  {% endif %}
 </div>
 {% endfor %}
 
 <script>
 function flipCard(el) {
-    el.classList.toggle('flipped');
+  el.classList.toggle('flipped');
 }
 
 function filterSections() {
-    const selected = Array.from(document.querySelectorAll('input[name="sport"]:checked')).map(cb => cb.value);
-    document.querySelectorAll('.sport-section').forEach(section => {
-        section.style.display = selected.includes(section.id) ? 'block' : 'none';
-    });
+  const selected = Array.from(document.querySelectorAll('input[name="sport"]:checked')).map(cb => cb.value);
+  document.querySelectorAll('.sport-section').forEach(section => {
+    section.style.display = selected.includes(section.id) ? 'block' : 'none';
+  });
 }
 
 document.getElementById('filterForm').addEventListener('submit', function (e) {
-    e.preventDefault();
-    filterSections();
+  e.preventDefault();
+  filterSections();
 });
 
-// ✅ Auto-run filter on initial page load
 window.addEventListener('DOMContentLoaded', filterSections);
 </script>
 {% endblock %}
