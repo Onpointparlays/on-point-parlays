@@ -6,6 +6,8 @@ from sqlalchemy import func
 import os
 import requests
 import random
+import traceback
+from generate_picks import generate_black_ledger_picks  # Make sure this file exists
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -131,12 +133,15 @@ def reset_db():
         db.create_all()
     return "✅ Database reset successfully!"
 
-# ✅ MANUAL PICK GENERATOR ROUTE
 @app.route('/generate-picks-now')
 def generate_picks_now():
-    from generate_picks import generate_black_ledger_picks
-    generate_black_ledger_picks()
-    return "✅ Smartline 80 picks generated manually."
+    try:
+        generate_black_ledger_picks()
+        return "✅ Picks generated successfully!"
+    except Exception as e:
+        error_log = traceback.format_exc()
+        print("🔥 PICK GENERATION FAILED:", error_log)
+        return f"<h3>❌ Error generating picks:</h3><pre>{error_log}</pre>", 500
 
 # ========================
 # LOCAL DEV INIT
