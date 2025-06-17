@@ -207,6 +207,15 @@ def internal_refresh():
         return "Forbidden", 403
     return test_refresh()
 
+# ✅ TEMP ROUTE TO RESET DB (REMOVE AFTER USE)
+@app.route('/reset-db', methods=['POST'])
+def reset_db():
+    if request.headers.get("X-Internal-Job") != "true":
+        return "Forbidden", 403
+    db.drop_all()
+    db.create_all()
+    return "✅ Database dropped and recreated with updated columns."
+
 # ========================
 # LOCAL DEV INIT
 # ========================
