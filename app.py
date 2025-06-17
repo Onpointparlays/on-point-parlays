@@ -2,6 +2,7 @@ from flask import Flask, render_template, request, redirect, session, url_for, f
 from models import db, User, Pick
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime, timedelta
+from sqlalchemy import func
 from generate_picks import generate_black_ledger_picks
 import os
 
@@ -32,7 +33,10 @@ def home():
 def picks():
     if not session.get('user_logged_in'):
         return render_template('locked.html')
-    picks = Pick.query.order_by(Pick.created_at.desc()).all()
+
+    # ✅ Only get picks for today based on UTC date
+    today = datetime.utcnow().date()
+    picks = Pick.query.filter(func.date(Pick.created_at) == today).order_by(Pick.created_at.desc()).all()
 
     picks_by_sport = {
         'nba': {'safe': [], 'mid': [], 'high': []},
