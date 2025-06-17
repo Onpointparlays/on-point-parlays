@@ -4,7 +4,7 @@ from flask import Flask
 from models import db, Pick
 from pytz import utc
 import os
-import random  # For simulated public betting % only
+import random
 
 app = Flask(__name__)
 
@@ -26,7 +26,6 @@ SPORTS = {
     "icehockey_nhl": "NHL"
 }
 
-# --- SCORING LOGIC ---
 def american_to_implied(odds):
     if odds > 0:
         return 100 / (odds + 100) * 100
@@ -70,7 +69,37 @@ def grade_public_fade(public_pct, model_pct):
     else:
         return "None"
 
-# --- ODDS FETCHING ---
+# --- Context Adjustment Logic ---
+def adjust_for_context(model_chance, is_home):
+    context_log = []
+
+    # Injury simulation
+    key_player_out = random.random() < 0.15
+    if key_player_out:
+        model_chance -= 7
+        context_log.append("🔻 Key player possibly out")
+
+    # Travel fatigue
+    travel_risk = random.random() < 0.25
+    if travel_risk and not is_home:
+        model_chance -= 5
+        context_log.append("🛬 Travel fatigue")
+
+    # Game time simulation
+    if random.random() < 0.2:
+        model_chance -= 2
+        context_log.append("⏰ Odd tip-off time")
+
+    # Playoff motivation
+    if random.random() < 0.25:
+        model_chance += 4
+        context_log.append("🔥 Motivation bump")
+
+    # Clamp between 45–95%
+    model_chance = max(45, min(95, model_chance))
+
+    return round(model_chance, 1), context_log
+
 def fetch_best_odds(event_id, market):
     url = f"{BASE_URL}/baseball_mlb/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
     response = requests.get(url)
@@ -94,7 +123,6 @@ def fetch_best_odds(event_id, market):
 
     return best_book or "Unavailable", f"{best_odd:+}" if best_odd is not None else "N/A"
 
-# --- MAIN ALGORITHM ---
 def generate_black_ledger_picks():
     for sport_key, sport_name in SPORTS.items():
         print(f"📘 Checking {sport_name} games...")
@@ -113,7 +141,6 @@ def generate_black_ledger_picks():
         ]
 
         print(f"⏳ {len(upcoming)} upcoming {sport_name} games found.")
-
         if not upcoming:
             print(f"🕒 No valid games found for {sport_name}. Might be offseason.")
             continue
@@ -131,31 +158,34 @@ def generate_black_ledger_picks():
             away_candidates = [team for team in event["teams"] if team != home]
             away = away_candidates[0] if away_candidates else "Unknown"
             team_pick = home
+            is_home = True
 
             sportsbook, odds = fetch_best_odds(event["id"], "h2h")
 
             try:
-                model_win_chance = 80.0
+                base_chance = 80.0
                 implied = american_to_implied(int(odds)) if odds != "N/A" else 50.0
             except:
+                base_chance = 75.0
                 implied = 50.0
-                model_win_chance = 75.0
 
-            edge = model_win_chance - implied
-            confidence = get_confidence_grade(model_win_chance)
-            tier = get_tier(model_win_chance)
+            model_chance, context_flags = adjust_for_context(base_chance, is_home)
+
+            edge = model_chance - implied
+            confidence = get_confidence_grade(model_chance)
+            tier = get_tier(model_chance)
             smartline = grade_smartline(edge)
 
             public_pct = simulate_public_percentage()
-            fade = grade_public_fade(public_pct, model_win_chance)
+            fade = grade_public_fade(public_pct, model_chance)
 
             pick = Pick(
                 sport=sport_name.lower(),
                 tier=tier,
                 pick_text=f"{team_pick} to win",
-                summary=f"{team_pick} is the home team against {away}. Odds auto-pulled.",
+                summary=f"{team_pick} is the home team against {away}. Odds auto-pulled. " + " | ".join(context_flags),
                 confidence=confidence,
-                hit_chance=f"{model_win_chance:.0f}%",
+                hit_chance=f"{model_chance:.0f}%",
                 sportsbook=sportsbook,
                 odds=odds,
                 smartline_value=smartline,
@@ -168,7 +198,6 @@ def generate_black_ledger_picks():
         db.session.commit()
         print(f"✅ {sport_name} picks saved at {datetime.utcnow()} UTC. Total picks: {pick_count}")
 
-# ✅ Manual run
 if __name__ == "__main__":
     with app.app_context():
         generate_black_ledger_picks()
