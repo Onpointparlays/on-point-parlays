@@ -38,9 +38,9 @@ def picks():
     if not session.get('user_logged_in'):
         return render_template('locked.html')
 
-    # Show picks from the last 24 hours
-    twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
-    picks = Pick.query.filter(Pick.created_at >= twenty_four_hours_ago).order_by(Pick.created_at.desc()).all()
+    now = datetime.utcnow()
+    since = now - timedelta(hours=24)
+    picks = Pick.query.filter(Pick.created_at >= since).order_by(Pick.created_at.desc()).all()
 
     picks_by_sport = {
         'nba': {'safe': [], 'mid': [], 'high': []},
@@ -165,10 +165,11 @@ def test_refresh():
 
         for tier, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
             for i in range(count):
-                event = upcoming[i % len(upcoming)] if upcoming else None
-                if not event or "teams" not in event or "home_team" not in event:
+                event = upcoming[i % len(upcoming)]
+                if "teams" not in event or "home_team" not in event:
                     continue
                 home = event["home_team"]
+                away_candidates = [team for team in event["teams"] if team != home]
                 team_pick = home
                 sportsbook, odds = fetch_best_odds(event["id"], "h2h")
                 pick = Pick(
@@ -184,22 +185,15 @@ def test_refresh():
                 )
                 db.session.add(pick)
 
-    # Inject manual test pick for debugging
-    test_pick = Pick(
-        sport="nba",
-        tier="Safe",
-        pick_text="Lakers to win",
-        summary="Lakers have strong momentum at home. (Test Pick)",
-        confidence="A+",
-        hit_chance="88%",
-        sportsbook="TestBook",
-        odds="+130",
-        created_at=datetime.utcnow()
-    )
-    db.session.add(test_pick)
-
     db.session.commit()
     return "Manual refresh completed (via live app)."
+
+# ✅ NEW: Internal route for secure cron refresh
+@app.route('/internal-refresh', methods=['POST'])
+def internal_refresh():
+    if request.headers.get("X-Internal-Job") != "true":
+        return "Forbidden", 403
+    return test_refresh()
 
 # ========================
 # LOCAL DEV INIT
