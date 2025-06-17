@@ -122,99 +122,14 @@ def cleanup_mocks():
         db.session.commit()
         return f"✅ Deleted {len(mock_picks)} mock picks from DB."
 
-@app.route('/test-refresh')
-def test_refresh():
-    API_KEY = "e3482b5a5079c3f265cdd620880a610d"
-    BASE_URL = "https://api.the-odds-api.com/v4/sports"
-
-    SPORTS = {
-        "basketball_nba": "NBA",
-        "americanfootball_nfl": "NFL",
-        "baseball_mlb": "MLB",
-        "icehockey_nhl": "NHL"
-    }
-
-    def fetch_best_odds(event_id, market, sport_key):
-        url = f"{BASE_URL}/{sport_key}/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
-        response = requests.get(url)
-        if response.status_code != 200:
-            return "Unavailable", "N/A"
-        data = response.json()
-        best_odd, best_book = None, None
-        for bookmaker in data.get("bookmakers", []):
-            for market_entry in bookmaker.get("markets", []):
-                if market_entry["key"] != market:
-                    continue
-                for outcome in market_entry.get("outcomes", []):
-                    if not best_odd or outcome["price"] > best_odd:
-                        best_odd = outcome["price"]
-                        best_book = bookmaker["title"]
-        return best_book or "Unavailable", f"{best_odd:+}" if best_odd is not None else "N/A"
-
-    for sport_key, sport_name in SPORTS.items():
-        url = f"{BASE_URL}/{sport_key}/events?apiKey={API_KEY}&regions=us&markets=h2h,totals,spreads"
-        response = requests.get(url)
-        if response.status_code != 200:
-            continue
-
-        events = response.json()
-        upcoming = [
-            e for e in events
-            if "commence_time" in e and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(timezone.utc) > datetime.utcnow().replace(tzinfo=timezone.utc)
-        ]
-
-        if not upcoming:
-            continue
-
-        for tier, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
-            for i in range(count):
-                event = upcoming[i % len(upcoming)]
-                if "teams" not in event or "home_team" not in event:
-                    continue
-
-                home = event["home_team"]
-                team_pick = home
-                sportsbook, odds = fetch_best_odds(event["id"], "h2h", sport_key)
-
-                smartline_val = f"+{random.randint(2, 12)}%"
-                public_fade_val = f"{random.choice(['+', '-'])}{random.randint(5, 30)}%"
-
-                pick = Pick(
-                    sport=sport_name.lower(),
-                    tier=tier,
-                    pick_text=f"{team_pick} to win",
-                    summary=f"{team_pick} has the edge at home. Odds auto-pulled.",
-                    confidence="A",
-                    hit_chance="80%",
-                    sportsbook=sportsbook,
-                    odds=odds,
-                    smartline_value=smartline_val,
-                    public_fade_value=public_fade_val,
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(pick)
-
-    try:
-        db.session.commit()
-        return "✅ Smartline & Fade Picks Refreshed!"
-    except Exception as e:
-        db.session.rollback()
-        return f"❌ Error: {str(e)}"
-
-@app.route('/internal-refresh', methods=['POST'])
-def internal_refresh():
-    if request.headers.get("X-Internal-Job") != "true":
-        return "Forbidden", 403
-    return test_refresh()
-
-# ✅ TEMP ROUTE TO RESET DB (REMOVE AFTER USE)
 @app.route('/reset-db', methods=['POST'])
 def reset_db():
     if request.headers.get("X-Internal-Job") != "true":
-        return "Forbidden", 403
-    db.drop_all()
-    db.create_all()
-    return "✅ Database dropped and recreated with updated columns."
+        return "Unauthorized", 403
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+    return "✅ Database reset successfully!"
 
 # ========================
 # LOCAL DEV INIT
