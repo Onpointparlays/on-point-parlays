@@ -13,7 +13,7 @@ if os.environ.get("RENDER"):
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 
-db.init_app(app)  # ✅ Init before context
+db.init_app(app)
 app.app_context().push()
 
 API_KEY = "e3482b5a5079c3f265cdd620880a610d"
@@ -25,6 +25,31 @@ SPORTS = {
     "baseball_mlb": "MLB",
     "icehockey_nhl": "NHL"
 }
+
+# ✅ New scoring helpers
+def american_to_implied(odds):
+    if odds > 0:
+        return 100 / (odds + 100) * 100
+    else:
+        return abs(odds) / (abs(odds) + 100) * 100
+
+def get_confidence_grade(hit_chance):
+    if hit_chance >= 85:
+        return "A+"
+    elif hit_chance >= 75:
+        return "A"
+    elif hit_chance >= 65:
+        return "B"
+    else:
+        return "C"
+
+def get_tier(hit_chance):
+    if hit_chance >= 80:
+        return "Safe"
+    elif hit_chance >= 70:
+        return "Mid"
+    else:
+        return "High"
 
 def fetch_best_odds(event_id, market):
     url = f"{BASE_URL}/baseball_mlb/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
@@ -74,34 +99,44 @@ def generate_black_ledger_picks():
 
         pick_count = 0
 
-        for tier, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
+        for tier_name, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
             for i in range(count):
                 event = upcoming[i % len(upcoming)]
 
-                if "home_team" not in event:
-                    print(f"⚠️ Skipping invalid event (no home_team): {event}")
+                if "teams" not in event or "home_team" not in event:
+                    print(f"⚠️ Skipping invalid event: {event}")
                     continue
 
                 home = event["home_team"]
-                away = "Unknown"
-
-                if "away_team" in event:
-                    away = event["away_team"]
-                elif "teams" in event and isinstance(event["teams"], list):
-                    away_candidates = [team for team in event["teams"] if team != home]
-                    away = away_candidates[0] if away_candidates else "Unknown"
-
-                team_pick = home  # Still picking home team for now
+                away_candidates = [team for team in event["teams"] if team != home]
+                away = away_candidates[0] if away_candidates else "Unknown"
+                team_pick = home
 
                 sportsbook, odds = fetch_best_odds(event["id"], "h2h")
+
+                # Simulated model % for now
+                model_win_chance = 80.0
+
+                # Convert odds to implied win %
+                if odds != "N/A":
+                    try:
+                        implied = american_to_implied(int(odds))
+                    except:
+                        implied = 50.0
+                else:
+                    implied = 50.0
+
+                edge = model_win_chance - implied
+                confidence = get_confidence_grade(model_win_chance)
+                tier = get_tier(model_win_chance)
 
                 pick = Pick(
                     sport=sport_name.lower(),
                     tier=tier,
                     pick_text=f"{team_pick} to win",
                     summary=f"{team_pick} is the home team against {away}. Odds auto-pulled.",
-                    confidence="A",
-                    hit_chance="80%",
+                    confidence=confidence,
+                    hit_chance=f"{model_win_chance:.0f}%",
                     sportsbook=sportsbook,
                     odds=odds,
                     created_at=datetime.utcnow()
