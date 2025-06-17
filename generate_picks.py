@@ -13,7 +13,7 @@ if os.environ.get("RENDER"):
 else:
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
 
-db.init_app(app)
+db.init_app(app)  # ✅ Init before context
 app.app_context().push()
 
 API_KEY = "e3482b5a5079c3f265cdd620880a610d"
@@ -78,18 +78,20 @@ def generate_black_ledger_picks():
             for i in range(count):
                 event = upcoming[i % len(upcoming)]
 
-                # ✅ Stronger validation
-                if not all(k in event for k in ("teams", "home_team", "id")):
-                    print(f"⚠️ Skipping event due to missing keys: {event}")
-                    continue
-                if not isinstance(event["teams"], list) or len(event["teams"]) < 2:
-                    print(f"⚠️ Skipping malformed teams list: {event}")
+                if "home_team" not in event:
+                    print(f"⚠️ Skipping invalid event (no home_team): {event}")
                     continue
 
                 home = event["home_team"]
-                away_candidates = [team for team in event["teams"] if team != home]
-                away = away_candidates[0] if away_candidates else "Unknown"
-                team_pick = home
+                away = "Unknown"
+
+                if "away_team" in event:
+                    away = event["away_team"]
+                elif "teams" in event and isinstance(event["teams"], list):
+                    away_candidates = [team for team in event["teams"] if team != home]
+                    away = away_candidates[0] if away_candidates else "Unknown"
+
+                team_pick = home  # Still picking home team for now
 
                 sportsbook, odds = fetch_best_odds(event["id"], "h2h")
 
@@ -97,7 +99,7 @@ def generate_black_ledger_picks():
                     sport=sport_name.lower(),
                     tier=tier,
                     pick_text=f"{team_pick} to win",
-                    summary=f"{team_pick} has the edge at home. Odds auto-pulled.",
+                    summary=f"{team_pick} is the home team against {away}. Odds auto-pulled.",
                     confidence="A",
                     hit_chance="80%",
                     sportsbook=sportsbook,
