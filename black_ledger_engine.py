@@ -1,23 +1,9 @@
 import requests
-from datetime import datetime
+from datetime import datetime, timedelta  # ✅ FIXED: added timedelta
 from models import db, Pick
 import pytz
-from flask import Flask
-import os
+from app import app
 
-# === Flask App Setup ===
-app = Flask(__name__)
-app.secret_key = 'your_secret_key_here'
-
-if os.environ.get("RENDER"):
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
-else:
-    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///users.db'
-
-app.permanent_session_lifetime = timedelta(days=7)
-db.init_app(app)
-
-# === Engine Class ===
 class BlackLedgerEngine:
     def __init__(self):
         self.odds_api_key = '67428de6e7860f6c46fd3fba43b8d395'
@@ -146,31 +132,32 @@ class BlackLedgerEngine:
 
     def get_confidence_tier(self, confidence):
         if confidence >= 80:
-            return "safe"
+            return "Safe"
         elif 70 <= confidence < 80:
-            return "mid"
+            return "Mid"
         elif 60 <= confidence < 70:
-            return "high"
+            return "High Risk"
         else:
             return None
 
     def save_pick(self, player_name, game, line, expected, tier, confidence, context):
         reason = f"{context['reason']} Line: {line}, Our Projection: {expected}."
-        new_pick = Pick(
-            sport="nba",
-            pick_text=f"{player_name} OVER {line} points",
-            summary=reason,
-            tier=tier,
-            confidence=confidence,
-            hit_chance=confidence,
-            sportsbook="PrizePicks",
-            odds=str(line)
-        )
-        db.session.add(new_pick)
-        db.session.commit()
-        print(f"✅ Saved {tier} pick: {player_name} over {line} – {confidence}%")
+        with app.app_context():
+            new_pick = Pick(
+                sport="nba",
+                pick_text=f"{player_name} OVER {line} points",
+                tier=tier.lower(),
+                confidence=confidence,
+                hit_chance=confidence,
+                summary=reason,
+                sportsbook="PrizePicks",
+                odds=line
+            )
+            db.session.add(new_pick)
+            db.session.commit()
+            print(f"✅ Saved {tier} pick: {player_name} over {line} – {confidence}%")
 
-# === Run Engine if Executed Directly ===
+# === Run the engine ===
 if __name__ == '__main__':
     with app.app_context():
         engine = BlackLedgerEngine()
