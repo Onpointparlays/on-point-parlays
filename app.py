@@ -6,7 +6,7 @@ from sqlalchemy import func
 import os
 import requests
 import random
-from generate_picks import generate_black_ledger_picks  # ✅ Ensure this function works
+from generate_picks import generate_black_ledger_picks  # ✅ Import real pick generator
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -142,16 +142,13 @@ def generate_picks_now():
 
 @app.route('/view-picks')
 def view_picks():
-    with app.app_context():
-        picks = Pick.query.order_by(Pick.created_at.desc()).all()
-        if not picks:
-            return "⚠️ No picks in the database."
-
-        output = "<h2>Current Picks in Database</h2><ul>"
-        for pick in picks:
-            output += f"<li><b>{pick.sport.upper()}</b> | {pick.tier.upper()} | {pick.summary} <br><i>{pick.created_at}</i></li><br>"
-        output += "</ul>"
-        return output
+    picks = Pick.query.order_by(Pick.created_at.desc()).all()
+    if not picks:
+        return "⚠️ No picks in the database."
+    output = ""
+    for pick in picks:
+        output += f"{pick.sport.upper()} [{pick.tier}] - {pick.pick_text} | Odds: {pick.odds} ({pick.sportsbook})<br>"
+    return output
 
 # ========================
 # LOCAL DEV INIT
