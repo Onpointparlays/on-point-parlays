@@ -163,6 +163,14 @@ def view_picks():
         output += f"{pick.sport.upper()} [{pick.tier}] - {pick.pick_text} | Odds: {pick.odds} ({pick.sportsbook})<br>"
     return output
 
+@app.route('/internal-refresh')
+def internal_refresh():
+    try:
+        generate_black_ledger_picks()
+        return "✅ Picks refreshed successfully from internal cron job."
+    except Exception as e:
+        return f"❌ Error during internal refresh: {str(e)}", 500
+
 # ========================
 # LOCAL DEV INIT
 # ========================
