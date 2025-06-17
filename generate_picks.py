@@ -4,10 +4,10 @@ from flask import Flask
 from models import db, Pick
 from pytz import utc
 import os
+import random  # For simulated public betting % only
 
 app = Flask(__name__)
 
-# ✅ Shared DB path across all Render services
 if os.environ.get("RENDER"):
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////mnt/data/users.db'
 else:
@@ -26,7 +26,7 @@ SPORTS = {
     "icehockey_nhl": "NHL"
 }
 
-# ✅ New scoring helpers
+# --- SCORING LOGIC ---
 def american_to_implied(odds):
     if odds > 0:
         return 100 / (odds + 100) * 100
@@ -51,6 +51,26 @@ def get_tier(hit_chance):
     else:
         return "High"
 
+def grade_smartline(edge):
+    if edge >= 10:
+        return "🔥 High"
+    elif edge >= 5:
+        return "✅ Medium"
+    else:
+        return "None"
+
+def simulate_public_percentage():
+    return random.randint(40, 90)
+
+def grade_public_fade(public_pct, model_pct):
+    if public_pct > 65 and model_pct < 60:
+        return "🧨 Fade Popular Pick"
+    elif public_pct > 60 and model_pct < 65:
+        return "🟡 Risky Popular Pick"
+    else:
+        return "None"
+
+# --- ODDS FETCHING ---
 def fetch_best_odds(event_id, market):
     url = f"{BASE_URL}/baseball_mlb/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
     response = requests.get(url)
@@ -74,6 +94,7 @@ def fetch_best_odds(event_id, market):
 
     return best_book or "Unavailable", f"{best_odd:+}" if best_odd is not None else "N/A"
 
+# --- MAIN ALGORITHM ---
 def generate_black_ledger_picks():
     for sport_key, sport_name in SPORTS.items():
         print(f"📘 Checking {sport_name} games...")
@@ -99,55 +120,55 @@ def generate_black_ledger_picks():
 
         pick_count = 0
 
-        for tier_name, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
-            for i in range(count):
-                event = upcoming[i % len(upcoming)]
+        for _ in range(6):
+            event = upcoming[pick_count % len(upcoming)]
 
-                if "teams" not in event or "home_team" not in event:
-                    print(f"⚠️ Skipping invalid event: {event}")
-                    continue
+            if "teams" not in event or "home_team" not in event:
+                print(f"⚠️ Skipping invalid event: {event}")
+                continue
 
-                home = event["home_team"]
-                away_candidates = [team for team in event["teams"] if team != home]
-                away = away_candidates[0] if away_candidates else "Unknown"
-                team_pick = home
+            home = event["home_team"]
+            away_candidates = [team for team in event["teams"] if team != home]
+            away = away_candidates[0] if away_candidates else "Unknown"
+            team_pick = home
 
-                sportsbook, odds = fetch_best_odds(event["id"], "h2h")
+            sportsbook, odds = fetch_best_odds(event["id"], "h2h")
 
-                # Simulated model % for now
+            try:
                 model_win_chance = 80.0
+                implied = american_to_implied(int(odds)) if odds != "N/A" else 50.0
+            except:
+                implied = 50.0
+                model_win_chance = 75.0
 
-                # Convert odds to implied win %
-                if odds != "N/A":
-                    try:
-                        implied = american_to_implied(int(odds))
-                    except:
-                        implied = 50.0
-                else:
-                    implied = 50.0
+            edge = model_win_chance - implied
+            confidence = get_confidence_grade(model_win_chance)
+            tier = get_tier(model_win_chance)
+            smartline = grade_smartline(edge)
 
-                edge = model_win_chance - implied
-                confidence = get_confidence_grade(model_win_chance)
-                tier = get_tier(model_win_chance)
+            public_pct = simulate_public_percentage()
+            fade = grade_public_fade(public_pct, model_win_chance)
 
-                pick = Pick(
-                    sport=sport_name.lower(),
-                    tier=tier,
-                    pick_text=f"{team_pick} to win",
-                    summary=f"{team_pick} is the home team against {away}. Odds auto-pulled.",
-                    confidence=confidence,
-                    hit_chance=f"{model_win_chance:.0f}%",
-                    sportsbook=sportsbook,
-                    odds=odds,
-                    created_at=datetime.utcnow()
-                )
-                db.session.add(pick)
-                pick_count += 1
+            pick = Pick(
+                sport=sport_name.lower(),
+                tier=tier,
+                pick_text=f"{team_pick} to win",
+                summary=f"{team_pick} is the home team against {away}. Odds auto-pulled.",
+                confidence=confidence,
+                hit_chance=f"{model_win_chance:.0f}%",
+                sportsbook=sportsbook,
+                odds=odds,
+                smartline_value=smartline,
+                public_fade_value=fade,
+                created_at=datetime.utcnow()
+            )
+            db.session.add(pick)
+            pick_count += 1
 
         db.session.commit()
         print(f"✅ {sport_name} picks saved at {datetime.utcnow()} UTC. Total picks: {pick_count}")
 
-# ✅ Manual trigger
+# ✅ Manual run
 if __name__ == "__main__":
     with app.app_context():
         generate_black_ledger_picks()
