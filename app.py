@@ -38,8 +38,9 @@ def picks():
     if not session.get('user_logged_in'):
         return render_template('locked.html')
 
-    today = datetime.utcnow().date()
-    picks = Pick.query.filter(func.date(Pick.created_at) == today).order_by(Pick.created_at.desc()).all()
+    now = datetime.utcnow()
+    yesterday = now - timedelta(days=1)
+    picks = Pick.query.filter(Pick.created_at >= yesterday).order_by(Pick.created_at.desc()).all()
 
     picks_by_sport = {
         'nba': {'safe': [], 'mid': [], 'high': []},
@@ -162,12 +163,9 @@ def test_refresh():
             if "commence_time" in e and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc) > datetime.utcnow().replace(tzinfo=utc)
         ]
 
-        if not upcoming:
-            continue
-
         for tier, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
-            for i in range(min(count, len(upcoming))):
-                event = upcoming[i]
+            for i in range(count):
+                event = upcoming[i % len(upcoming)]
                 if "teams" not in event or "home_team" not in event:
                     continue
                 home = event["home_team"]
