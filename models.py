@@ -19,4 +19,6 @@ class Pick(db.Model):
     hit_chance = db.Column(db.String(10))
     sportsbook = db.Column(db.String(100))
     odds = db.Column(db.String(50))
+    smartline_value = db.Column(db.String(10))       # ✅ NEW
+    public_fade_value = db.Column(db.String(10))     # ✅ NEW
     created_at = db.Column(db.DateTime, default=datetime.utcnow)

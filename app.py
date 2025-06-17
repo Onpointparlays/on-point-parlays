@@ -1,11 +1,11 @@
 from flask import Flask, render_template, request, redirect, session, url_for, flash
 from models import db, User, Pick
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from sqlalchemy import func
 import os
-from pytz import utc
 import requests
+import random
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -134,8 +134,8 @@ def test_refresh():
         "icehockey_nhl": "NHL"
     }
 
-    def fetch_best_odds(event_id, market):
-        url = f"{BASE_URL}/baseball_mlb/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
+    def fetch_best_odds(event_id, market, sport_key):
+        url = f"{BASE_URL}/{sport_key}/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
         response = requests.get(url)
         if response.status_code != 200:
             return "Unavailable", "N/A"
@@ -160,18 +160,25 @@ def test_refresh():
         events = response.json()
         upcoming = [
             e for e in events
-            if "commence_time" in e and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc) > datetime.utcnow().replace(tzinfo=utc)
+            if "commence_time" in e and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(timezone.utc) > datetime.utcnow().replace(tzinfo=timezone.utc)
         ]
+
+        if not upcoming:
+            continue
 
         for tier, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
             for i in range(count):
                 event = upcoming[i % len(upcoming)]
                 if "teams" not in event or "home_team" not in event:
                     continue
+
                 home = event["home_team"]
-                away_candidates = [team for team in event["teams"] if team != home]
                 team_pick = home
-                sportsbook, odds = fetch_best_odds(event["id"], "h2h")
+                sportsbook, odds = fetch_best_odds(event["id"], "h2h", sport_key)
+
+                smartline_val = f"+{random.randint(2, 12)}%"
+                public_fade_val = f"{random.choice(['+', '-'])}{random.randint(5, 30)}%"
+
                 pick = Pick(
                     sport=sport_name.lower(),
                     tier=tier,
@@ -181,14 +188,19 @@ def test_refresh():
                     hit_chance="80%",
                     sportsbook=sportsbook,
                     odds=odds,
+                    smartline_value=smartline_val,
+                    public_fade_value=public_fade_val,
                     created_at=datetime.utcnow()
                 )
                 db.session.add(pick)
 
-    db.session.commit()
-    return "Manual refresh completed (via live app)."
+    try:
+        db.session.commit()
+        return "✅ Smartline & Fade Picks Refreshed!"
+    except Exception as e:
+        db.session.rollback()
+        return f"❌ Error: {str(e)}"
 
-# ✅ NEW: Internal route for secure cron refresh
 @app.route('/internal-refresh', methods=['POST'])
 def internal_refresh():
     if request.headers.get("X-Internal-Job") != "true":
