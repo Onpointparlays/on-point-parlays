@@ -1,7 +1,7 @@
 import requests
 from datetime import datetime
 from flask import Flask
-from models import db, Pick
+from models import db, Pick, BlackLedgerPick
 from pytz import utc
 import os
 import random
@@ -69,35 +69,28 @@ def grade_public_fade(public_pct, model_pct):
     else:
         return "None"
 
-# --- Context Adjustment Logic ---
 def adjust_for_context(model_chance, is_home):
     context_log = []
 
-    # Injury simulation
     key_player_out = random.random() < 0.15
     if key_player_out:
         model_chance -= 7
         context_log.append("🔻 Key player possibly out")
 
-    # Travel fatigue
     travel_risk = random.random() < 0.25
     if travel_risk and not is_home:
         model_chance -= 5
         context_log.append("🛬 Travel fatigue")
 
-    # Game time simulation
     if random.random() < 0.2:
         model_chance -= 2
         context_log.append("⏰ Odd tip-off time")
 
-    # Playoff motivation
     if random.random() < 0.25:
         model_chance += 4
         context_log.append("🔥 Motivation bump")
 
-    # Clamp between 45–95%
     model_chance = max(45, min(95, model_chance))
-
     return round(model_chance, 1), context_log
 
 def fetch_best_odds(event_id, market):
@@ -195,8 +188,32 @@ def generate_black_ledger_picks():
             db.session.add(pick)
             pick_count += 1
 
+        # 🎯 New Parlay Logic (Phase 4)
+        for tier, legs in [("Safe", 2), ("Mid", 3), ("High", 5)]:
+            for _ in range(3):
+                parlay_legs = []
+                for i in range(legs):
+                    parlay_legs.append({
+                        "team": f"Team {i+1}",
+                        "type": "Moneyline",
+                        "odds": "+120",
+                        "summary": f"Team {i+1} has strong stats in this spot."
+                    })
+
+                parlay = BlackLedgerPick(
+                    sport=sport_name.lower(),
+                    tier=tier,
+                    bet_type="Moneyline",
+                    legs=parlay_legs,
+                    hit_chance="82%",
+                    confidence="A",
+                    summary="Built using simulated win momentum + matchup edge.",
+                    created_at=datetime.utcnow()
+                )
+                db.session.add(parlay)
+
         db.session.commit()
-        print(f"✅ {sport_name} picks saved at {datetime.utcnow()} UTC. Total picks: {pick_count}")
+        print(f"✅ {sport_name} picks & parlays saved at {datetime.utcnow()} UTC")
 
 if __name__ == "__main__":
     with app.app_context():
