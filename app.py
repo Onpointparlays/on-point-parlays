@@ -38,9 +38,9 @@ def picks():
     if not session.get('user_logged_in'):
         return render_template('locked.html')
 
-    now = datetime.utcnow()
-    yesterday = now - timedelta(days=1)
-    picks = Pick.query.filter(Pick.created_at >= yesterday).order_by(Pick.created_at.desc()).all()
+    # Show picks from the last 24 hours
+    twenty_four_hours_ago = datetime.utcnow() - timedelta(hours=24)
+    picks = Pick.query.filter(Pick.created_at >= twenty_four_hours_ago).order_by(Pick.created_at.desc()).all()
 
     picks_by_sport = {
         'nba': {'safe': [], 'mid': [], 'high': []},
@@ -165,8 +165,8 @@ def test_refresh():
 
         for tier, count in [("Safe", 2), ("Mid", 2), ("High", 2)]:
             for i in range(count):
-                event = upcoming[i % len(upcoming)]
-                if "teams" not in event or "home_team" not in event:
+                event = upcoming[i % len(upcoming)] if upcoming else None
+                if not event or "teams" not in event or "home_team" not in event:
                     continue
                 home = event["home_team"]
                 team_pick = home
@@ -183,6 +183,20 @@ def test_refresh():
                     created_at=datetime.utcnow()
                 )
                 db.session.add(pick)
+
+    # Inject manual test pick for debugging
+    test_pick = Pick(
+        sport="nba",
+        tier="Safe",
+        pick_text="Lakers to win",
+        summary="Lakers have strong momentum at home. (Test Pick)",
+        confidence="A+",
+        hit_chance="88%",
+        sportsbook="TestBook",
+        odds="+130",
+        created_at=datetime.utcnow()
+    )
+    db.session.add(test_pick)
 
     db.session.commit()
     return "Manual refresh completed (via live app)."
