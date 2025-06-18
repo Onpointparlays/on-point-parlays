@@ -189,3 +189,6 @@ if __name__ == '__main__':
     with app.app_context():
         db.create_all()
     app.run(debug=True)
+
+# ✅ Required by Render to expose the app object
+app = app
