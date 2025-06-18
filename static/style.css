@@ -80,6 +80,7 @@ button:hover {
     background-color: #e6c200;
 }
 
+/* Flip Card Styling (NEW LOGIC) */
 .card-container {
     display: flex;
     justify-content: center;
@@ -89,10 +90,11 @@ button:hover {
 }
 
 .card-wrapper {
-    width: 240px;
-    height: 340px;
+    width: 300px;
+    height: 350px;
     perspective: 1000px;
     animation: fadeIn 1s ease;
+    cursor: pointer;
 }
 
 .card {
@@ -100,8 +102,8 @@ button:hover {
     height: 100%;
     position: relative;
     transform-style: preserve-3d;
-    transition: transform 0.6s;
-    border-radius: 20px;
+    transition: transform 0.8s;
+    border-radius: 12px;
 }
 
 .card-wrapper.flipped .card {
@@ -114,39 +116,69 @@ button:hover {
     height: 100%;
     backface-visibility: hidden;
     background-color: #111;
-    border-radius: 20px;
-    box-shadow: 0 0 25px rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
     display: flex;
     flex-direction: column;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
     padding: 20px;
     text-align: center;
+}
+
+.card-front {
+    transform: rotateY(0deg);
     color: #FFD700;
+    font-size: 14px;
 }
 
 .card-back {
     transform: rotateY(180deg);
     font-size: 14px;
-    line-height: 1.6;
+    line-height: 1.5;
+    color: #FFD700;
 }
 
-.card-wrapper.safe .card-front {
-    animation: glowSafe 2s infinite alternate;
-    border: 2px solid #00ff88;
+/* Front Card Elements */
+.card-front .parlay-header {
+    font-size: 18px;
+    font-weight: bold;
+    color: gold;
+    margin-bottom: 10px;
 }
 
-.card-wrapper.mid .card-front {
-    animation: glowMid 2s infinite alternate;
-    border: 2px solid #FFA500;
+.card-front .front-info {
+    font-size: 14px;
+    margin-top: 8px;
 }
 
-.card-wrapper.high .card-front {
-    animation: glowHigh 2s infinite alternate;
-    border: 2px solid #FF3C3C;
+.card-front .click-note {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: auto;
 }
 
-/* New Tier Label Style */
+.card-front .sport-logo {
+    max-height: 50px;
+    margin-bottom: 10px;
+    filter: drop-shadow(0 0 4px gold);
+}
+
+/* Back Card Elements */
+.card-back .leg {
+    text-align: left;
+    font-size: 13px;
+    margin-bottom: 8px;
+}
+
+.card-back .summary {
+    font-style: italic;
+    font-size: 13px;
+    color: #aaa;
+    margin-top: 12px;
+}
+
+/* Tier Label Block */
 .card-tier-group {
     position: relative;
     margin-top: 60px;
@@ -175,8 +207,8 @@ button:hover {
 }
 
 .tier-label.mid {
-    color: #FFA500;
-    border-left: 4px solid #FFA500;
+    color: #ffffff;
+    border-left: 4px solid #ffffff;
 }
 
 .tier-label.high {
@@ -184,21 +216,38 @@ button:hover {
     border-left: 4px solid #FF3C3C;
 }
 
+/* Tier Glow Animations */
+.card-wrapper.safe .card-front {
+    animation: glowSafe 2s infinite alternate;
+    border: 2px solid #00ff88;
+}
+
+.card-wrapper.mid .card-front {
+    animation: glowMid 2s infinite alternate;
+    border: 2px solid #ffffff;
+}
+
+.card-wrapper.high .card-front {
+    animation: glowHigh 2s infinite alternate;
+    border: 2px solid #FF3C3C;
+}
+
+/* Keyframe Effects */
 @keyframes glowSafe {
     0% { box-shadow: 0 0 10px #00ff88; }
-    50% { box-shadow: 0 0 35px #00ff88; }
+    50% { box-shadow: 0 0 25px #00ff88; }
     100% { box-shadow: 0 0 10px #00ff88; }
 }
 
 @keyframes glowMid {
-    0% { box-shadow: 0 0 10px #FFA500; }
-    50% { box-shadow: 0 0 35px #FFA500; }
-    100% { box-shadow: 0 0 10px #FFA500; }
+    0% { box-shadow: 0 0 10px #ffffff; }
+    50% { box-shadow: 0 0 25px #ffffff; }
+    100% { box-shadow: 0 0 10px #ffffff; }
 }
 
 @keyframes glowHigh {
     0% { box-shadow: 0 0 10px #FF3C3C; }
-    50% { box-shadow: 0 0 35px #FF3C3C; }
+    50% { box-shadow: 0 0 25px #FF3C3C; }
     100% { box-shadow: 0 0 10px #FF3C3C; }
 }
 

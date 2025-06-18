@@ -33,16 +33,16 @@
     }
 
     h2.section-title {
-      margin-left: 20px;
+      margin-left: 40px;
+      margin-top: 60px;
       color: gold;
-      font-size: 26px;
+      font-size: 28px;
       border-bottom: 2px solid gold;
       padding-bottom: 5px;
-      margin-top: 50px;
     }
 
     .tier-title {
-      margin-left: 30px;
+      margin-left: 60px;
       margin-top: 35px;
       font-size: 22px;
       color: #FFD700;
@@ -52,16 +52,16 @@
       display: flex;
       flex-wrap: wrap;
       justify-content: flex-start;
-      gap: 30px;
-      padding: 20px 30px;
+      gap: 40px;
+      padding: 20px 60px;
     }
 
     .flip-card {
       background: transparent;
       width: 300px;
-      height: 340px;
+      height: 350px;
       perspective: 1000px;
-      flex-shrink: 0;
+      cursor: pointer;
     }
 
     .flip-card-inner {
@@ -82,7 +82,7 @@
       position: absolute;
       width: 100%;
       height: 100%;
-      border-radius: 10px;
+      border-radius: 12px;
       backface-visibility: hidden;
       padding: 20px;
       box-sizing: border-box;
@@ -91,20 +91,40 @@
 
     .flip-card-front {
       background-color: #111;
-      border: 3px solid #FFD700;
+      border: 2px solid #FFD700;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      align-items: center;
     }
 
     .flip-card-back {
       background-color: #111;
       transform: rotateY(180deg);
-      border: 3px solid #FFD700;
+      border: 2px solid #FFD700;
     }
 
     .parlay-header {
       font-size: 18px;
       font-weight: bold;
       color: gold;
-      margin-bottom: 10px;
+      margin-top: 5px;
+    }
+
+    .front-info {
+      font-size: 14px;
+      margin-top: 10px;
+    }
+
+    .sport-logo {
+      max-height: 60px;
+      margin-top: 10px;
+    }
+
+    .click-note {
+      font-size: 12px;
+      color: #aaa;
+      margin-top: auto;
     }
 
     .leg {
@@ -121,26 +141,15 @@
     }
 
     .safe-outline {
-      box-shadow: 0 0 10px 2px #FFD700;
+      box-shadow: 0 0 15px 3px #00ff88;
     }
 
     .mid-outline {
-      box-shadow: 0 0 10px 2px #1E90FF;
+      box-shadow: 0 0 15px 3px white;
     }
 
     .high-outline {
-      box-shadow: 0 0 10px 2px #FF4500;
-    }
-
-    @media screen and (max-width: 768px) {
-      .card-row {
-        flex-wrap: nowrap;
-        overflow-x: auto;
-      }
-
-      .flip-card {
-        flex: 0 0 auto;
-      }
+      box-shadow: 0 0 15px 3px red;
     }
   </style>
   <script>
@@ -185,8 +194,13 @@
                 <div class="flip-card {{ tier.lower() }}-outline">
                   <div class="flip-card-inner">
                     <div class="flip-card-front">
+                      <img class="sport-logo" src="{{ url_for('static', filename='images/' + sport + '_logo.png') }}" alt="{{ sport }} logo">
                       <div class="parlay-header">🔥 {{ tier.title() }} Parlay</div>
-                      <p>Click to view details</p>
+                      <div class="front-info">
+                        Hit Chance: {{ pick.hit_chance }}<br>
+                        Confidence: {{ pick.confidence }}
+                      </div>
+                      <div class="click-note">Click to view details</div>
                     </div>
                     <div class="flip-card-back">
                       {% for leg in pick.legs %}
@@ -195,11 +209,7 @@
                           {{ leg.summary }}
                         </div>
                       {% endfor %}
-                      <div class="summary">
-                        Hit Chance: {{ pick.hit_chance }}<br>
-                        Confidence: {{ pick.confidence }}<br>
-                        {{ pick.summary }}
-                      </div>
+                      <div class="summary">{{ pick.summary }}</div>
                     </div>
                   </div>
                 </div>
