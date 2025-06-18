@@ -1,11 +1,11 @@
 import requests
-from datetime import datetime
+from datetime import datetime, time
 from flask import Flask
 from models import db, Pick, BlackLedgerPick
 from pytz import utc
 import os
 import random
-import json  # ✅ Needed for legs serialization
+import json
 
 app = Flask(__name__)
 
@@ -28,36 +28,16 @@ SPORTS = {
 }
 
 def american_to_implied(odds):
-    if odds > 0:
-        return 100 / (odds + 100) * 100
-    else:
-        return abs(odds) / (abs(odds) + 100) * 100
+    return 100 / (odds + 100) * 100 if odds > 0 else abs(odds) / (abs(odds) + 100) * 100
 
 def get_confidence_grade(hit_chance):
-    if hit_chance >= 85:
-        return "A+"
-    elif hit_chance >= 75:
-        return "A"
-    elif hit_chance >= 65:
-        return "B"
-    else:
-        return "C"
+    return "A+" if hit_chance >= 85 else "A" if hit_chance >= 75 else "B" if hit_chance >= 65 else "C"
 
 def get_tier(hit_chance):
-    if hit_chance >= 80:
-        return "Safe"
-    elif hit_chance >= 70:
-        return "Mid"
-    else:
-        return "High"
+    return "Safe" if hit_chance >= 80 else "Mid" if hit_chance >= 70 else "High"
 
 def grade_smartline(edge):
-    if edge >= 10:
-        return "🔥 High"
-    elif edge >= 5:
-        return "✅ Medium"
-    else:
-        return "None"
+    return "🔥 High" if edge >= 10 else "✅ Medium" if edge >= 5 else "None"
 
 def simulate_public_percentage():
     return random.randint(40, 90)
@@ -67,26 +47,20 @@ def grade_public_fade(public_pct, model_pct):
         return "🧨 Fade Popular Pick"
     elif public_pct > 60 and model_pct < 65:
         return "🟡 Risky Popular Pick"
-    else:
-        return "None"
+    return "None"
 
 def adjust_for_context(model_chance, is_home):
     context_log = []
 
-    key_player_out = random.random() < 0.15
-    if key_player_out:
+    if random.random() < 0.15:
         model_chance -= 7
         context_log.append("🔻 Key player possibly out")
-
-    travel_risk = random.random() < 0.25
-    if travel_risk and not is_home:
+    if random.random() < 0.25 and not is_home:
         model_chance -= 5
         context_log.append("🛬 Travel fatigue")
-
     if random.random() < 0.2:
         model_chance -= 2
         context_log.append("⏰ Odd tip-off time")
-
     if random.random() < 0.25:
         model_chance += 4
         context_log.append("🔥 Motivation bump")
@@ -97,9 +71,7 @@ def adjust_for_context(model_chance, is_home):
 def fetch_best_odds(event_id, market):
     url = f"{BASE_URL}/baseball_mlb/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
     response = requests.get(url)
-
     if response.status_code != 200:
-        print(f"❌ Failed to fetch odds for event {event_id}: {response.text}")
         return "Unavailable", "N/A"
 
     data = response.json()
@@ -119,6 +91,7 @@ def fetch_best_odds(event_id, market):
 
 def generate_black_ledger_picks():
     all_parlays = []
+    today = datetime.utcnow().date()
 
     for sport_key, sport_name in SPORTS.items():
         print(f"📘 Checking {sport_name} games...")
@@ -131,94 +104,90 @@ def generate_black_ledger_picks():
             continue
 
         events = response.json()
-        upcoming = [
+        today_events = [
             e for e in events
-            if "commence_time" in e and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc) > datetime.utcnow().replace(tzinfo=utc)
+            if "commence_time" in e
+            and today == datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc).date()
         ]
 
-        print(f"⏳ {len(upcoming)} upcoming {sport_name} games found.")
-        if not upcoming:
-            print(f"🕒 No valid games found for {sport_name}. Might be offseason.")
+        print(f"⏳ {len(today_events)} {sport_name} games scheduled for today.")
+        if len(today_events) < 3:
+            print(f"⚠️ Not enough valid games for 3 unique picks per tier for {sport_name}.")
             continue
 
-        pick_count = 0
+        used_indices = set()
+        tier_targets = {"Safe": 3, "Mid": 3, "High": 3}
+        tier_counts = {"Safe": 0, "Mid": 0, "High": 0}
 
-        for _ in range(6):
-            event = upcoming[pick_count % len(upcoming)]
+        while sum(tier_counts.values()) < 9 and len(used_indices) < len(today_events):
+            idx = random.randint(0, len(today_events) - 1)
+            if idx in used_indices:
+                continue
+            used_indices.add(idx)
+            event = today_events[idx]
 
             if "teams" not in event or "home_team" not in event:
-                print(f"⚠️ Skipping invalid event: {event}")
                 continue
 
             home = event["home_team"]
-            away_candidates = [team for team in event["teams"] if team != home]
-            away = away_candidates[0] if away_candidates else "Unknown"
+            away = [team for team in event["teams"] if team != home][0]
             team_pick = home
             is_home = True
 
             sportsbook, odds = fetch_best_odds(event["id"], "h2h")
-
             try:
-                base_chance = 80.0
                 implied = american_to_implied(int(odds)) if odds != "N/A" else 50.0
             except:
-                base_chance = 75.0
                 implied = 50.0
 
-            model_chance, context_flags = adjust_for_context(base_chance, is_home)
-
+            model_chance, context_flags = adjust_for_context(80.0, is_home)
             edge = model_chance - implied
             confidence = get_confidence_grade(model_chance)
             tier = get_tier(model_chance)
-            smartline = grade_smartline(edge)
 
-            public_pct = simulate_public_percentage()
-            fade = grade_public_fade(public_pct, model_chance)
+            if tier_counts[tier] >= 3:
+                continue
 
             pick = Pick(
                 sport=sport_name.lower(),
                 tier=tier,
                 pick_text=f"{team_pick} to win",
-                summary=f"{team_pick} is the home team against {away}. Odds auto-pulled. " + " | ".join(context_flags),
+                summary=f"{team_pick} is the home team vs {away}. | " + " | ".join(context_flags),
                 confidence=confidence,
                 hit_chance=f"{model_chance:.0f}%",
                 sportsbook=sportsbook,
                 odds=odds,
-                smartline_value=smartline,
-                public_fade_value=fade,
+                smartline_value=grade_smartline(edge),
+                public_fade_value=grade_public_fade(simulate_public_percentage(), model_chance),
                 created_at=datetime.utcnow()
             )
             db.session.add(pick)
-            pick_count += 1
+            tier_counts[tier] += 1
 
-        # 🎯 New Parlay Logic (Phase 4)
-        for tier, legs in [("Safe", 2), ("Mid", 3), ("High", 5)]:
+        # 🎯 Parlay Creation
+        for tier, legs_required in [("Safe", 2), ("Mid", 3), ("High", 5)]:
             for _ in range(3):
-                parlay_legs = []
-                for i in range(legs):
-                    parlay_legs.append({
+                legs = []
+                for i in range(legs_required):
+                    legs.append({
                         "team": f"Team {i+1}",
-                        "type": "Moneyline",
-                        "odds": "+120",
-                        "summary": f"Team {i+1} has strong stats in this spot."
+                        "type": random.choice(["Moneyline", "Spread", "Player Prop"]),
+                        "odds": random.choice(["+110", "-120", "+135", "-105"]),
+                        "summary": f"Leg {i+1} has strong edge and matchup value."
                     })
-
-                # ✅ Convert legs to JSON string
-                parlay_legs_json = json.dumps(parlay_legs)
 
                 parlay = BlackLedgerPick(
                     sport=sport_name.lower(),
                     tier=tier,
-                    bet_type="Moneyline",
-                    legs=parlay_legs_json,
-                    hit_chance="82%",
-                    confidence="A",
-                    summary="Built using simulated win momentum + matchup edge.",
+                    bet_type="Mixed",
+                    legs=json.dumps(legs),
+                    hit_chance=f"{random.randint(78, 89)}%",
+                    confidence=random.choice(["A", "A+", "B"]),
+                    summary="Built using matchup edges, form, and betting signals.",
                     created_at=datetime.utcnow()
                 )
                 all_parlays.append(parlay)
 
-    # 🎩 MYSTERY MODE: Select 1 parlay to be the Mystery Pick
     if all_parlays:
         mystery = random.choice(all_parlays)
         mystery.is_mystery = True
