@@ -37,9 +37,6 @@ def home():
 
 @app.route('/picks')
 def picks():
-    if not session.get('user_logged_in'):
-        return render_template('locked.html')
-
     now = datetime.utcnow()
     since = now - timedelta(hours=24)
 
@@ -70,7 +67,10 @@ def picks():
                 parlay.legs = []
             picks_by_sport[sport_key][tier_key].append(parlay)
 
-    return render_template('picks.html', picks_by_sport=picks_by_sport)
+    if not session.get('user_logged_in'):
+        return render_template('picks.html', logged_in=False)
+
+    return render_template('picks.html', picks_by_sport=picks_by_sport, logged_in=True)
 
 @app.route('/login', methods=['POST'])
 def login():

@@ -5,6 +5,7 @@ from models import db, Pick, BlackLedgerPick
 from pytz import utc
 import os
 import random
+import json  # ✅ Needed for legs serialization
 
 app = Flask(__name__)
 
@@ -117,6 +118,8 @@ def fetch_best_odds(event_id, market):
     return best_book or "Unavailable", f"{best_odd:+}" if best_odd is not None else "N/A"
 
 def generate_black_ledger_picks():
+    all_parlays = []
+
     for sport_key, sport_name in SPORTS.items():
         print(f"📘 Checking {sport_name} games...")
 
@@ -200,20 +203,32 @@ def generate_black_ledger_picks():
                         "summary": f"Team {i+1} has strong stats in this spot."
                     })
 
+                # ✅ Convert legs to JSON string
+                parlay_legs_json = json.dumps(parlay_legs)
+
                 parlay = BlackLedgerPick(
                     sport=sport_name.lower(),
                     tier=tier,
                     bet_type="Moneyline",
-                    legs=parlay_legs,
+                    legs=parlay_legs_json,
                     hit_chance="82%",
                     confidence="A",
                     summary="Built using simulated win momentum + matchup edge.",
                     created_at=datetime.utcnow()
                 )
-                db.session.add(parlay)
+                all_parlays.append(parlay)
 
-        db.session.commit()
-        print(f"✅ {sport_name} picks & parlays saved at {datetime.utcnow()} UTC")
+    # 🎩 MYSTERY MODE: Select 1 parlay to be the Mystery Pick
+    if all_parlays:
+        mystery = random.choice(all_parlays)
+        mystery.is_mystery = True
+        print(f"🎩 Mystery Pick set: {mystery.sport.title()} | {mystery.tier}")
+
+    for parlay in all_parlays:
+        db.session.add(parlay)
+
+    db.session.commit()
+    print(f"✅ All picks & {len(all_parlays)} parlays saved at {datetime.utcnow()} UTC")
 
 if __name__ == "__main__":
     with app.app_context():
