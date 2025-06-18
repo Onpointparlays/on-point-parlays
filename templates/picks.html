@@ -50,16 +50,16 @@
 
     .card-row {
       display: flex;
-      flex-wrap: wrap;
-      justify-content: flex-start;
+      justify-content: center;
       gap: 40px;
+      flex-wrap: wrap;
       padding: 20px 60px;
     }
 
     .flip-card {
       background: transparent;
-      width: 200px;
-      height: 320px;
+      width: 300px;
+      height: 350px;
       perspective: 1000px;
       cursor: pointer;
     }
@@ -105,28 +105,20 @@
     }
 
     .parlay-header {
-      font-size: 16px;
+      font-size: 18px;
       font-weight: bold;
       color: gold;
       margin-top: 5px;
     }
 
-    .sport-logo {
-      max-height: 45px;
+    .front-info {
+      font-size: 14px;
       margin-top: 10px;
     }
 
-    .front-info {
-      font-size: 13px;
-      margin-top: 8px;
-      color: white;
-    }
-
-    .front-odds {
-      font-size: 13px;
-      margin-top: 6px;
-      color: #FFD700;
-      cursor: help;
+    .sport-logo {
+      max-height: 60px;
+      margin-top: 10px;
     }
 
     .click-note {
@@ -146,6 +138,13 @@
       font-size: 13px;
       margin-top: 10px;
       color: #aaa;
+    }
+
+    .odds {
+      font-size: 14px;
+      font-weight: bold;
+      color: gold;
+      margin-top: 12px;
     }
 
     .safe-outline {
@@ -208,9 +207,6 @@
                         Hit Chance: {{ pick.hit_chance }}<br>
                         Confidence: {{ pick.confidence }}
                       </div>
-                      <div class="front-odds" title="Best odds pulled from FanDuel and DraftKings">
-                        Best Odds: +274 (FanDuel)
-                      </div>
                       <div class="click-note">Click to view details</div>
                     </div>
                     <div class="flip-card-back">
@@ -221,6 +217,9 @@
                         </div>
                       {% endfor %}
                       <div class="summary">{{ pick.summary }}</div>
+                      {% if pick.best_odds %}
+                        <div class="odds">Best Odds: {{ pick.best_odds }} ({{ pick.best_sportsbook }})</div>
+                      {% endif %}
                     </div>
                   </div>
                 </div>
