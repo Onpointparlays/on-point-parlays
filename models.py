@@ -24,6 +24,7 @@ class Pick(db.Model):
     smartline_value = db.Column(db.String(10))
     public_fade_value = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    game_time = db.Column(db.DateTime)  # ✅ NEW: Used to filter picks based on game time
 
 class BlackLedgerPick(db.Model):
     id = db.Column(db.Integer, primary_key=True)
