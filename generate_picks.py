@@ -1,5 +1,6 @@
+# generate_picks.py
 import requests
-from datetime import datetime, time
+from datetime import datetime
 from flask import Flask
 from models import db, Pick, BlackLedgerPick
 from pytz import utc
@@ -51,7 +52,6 @@ def grade_public_fade(public_pct, model_pct):
 
 def adjust_for_context(model_chance, is_home):
     context_log = []
-
     if random.random() < 0.15:
         model_chance -= 7
         context_log.append("🔻 Key player possibly out")
@@ -64,30 +64,15 @@ def adjust_for_context(model_chance, is_home):
     if random.random() < 0.25:
         model_chance += 4
         context_log.append("🔥 Motivation bump")
-
     model_chance = max(45, min(95, model_chance))
     return round(model_chance, 1), context_log
 
-def fetch_best_odds(event_id, market, sport_key):
-    url = f"{BASE_URL}/{sport_key}/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
-    response = requests.get(url)
-    if response.status_code != 200:
-        return "Unavailable", "N/A"
-
-    data = response.json()
-    best_odd = None
-    best_book = None
-
-    for bookmaker in data.get("bookmakers", []):
-        for market_entry in bookmaker.get("markets", []):
-            if market_entry["key"] != market:
-                continue
-            for outcome in market_entry.get("outcomes", []):
-                if not best_odd or outcome["price"] > best_odd:
-                    best_odd = outcome["price"]
-                    best_book = bookmaker["title"]
-
-    return best_book or "Unavailable", f"{best_odd:+}" if best_odd is not None else "N/A"
+def american_to_decimal(american_odds):
+    try:
+        val = int(american_odds)
+        return (val / 100) + 1 if val > 0 else (100 / abs(val)) + 1
+    except:
+        return 1.91
 
 def generate_black_ledger_picks():
     all_parlays = []
@@ -106,19 +91,11 @@ def generate_black_ledger_picks():
         events = response.json()
         today_events = [
             e for e in events
-            if "commence_time" in e
-            and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc).date() == today
+            if "commence_time" in e and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc).date() == today
         ]
 
-        print(f"⏳ {len(today_events)} {sport_name} games scheduled for today.")
-        if len(today_events) < 3:
-            print(f"⚠️ Not enough valid games for 3 unique picks per tier for {sport_name}.")
-            continue
-
         used_indices = set()
-        tier_targets = {"Safe": 3, "Mid": 3, "High": 3}
         tier_counts = {"Safe": 0, "Mid": 0, "High": 0}
-        picks_added = []
 
         while sum(tier_counts.values()) < 9 and len(used_indices) < len(today_events):
             idx = random.randint(0, len(today_events) - 1)
@@ -135,7 +112,7 @@ def generate_black_ledger_picks():
             team_pick = home
             is_home = True
 
-            sportsbook, odds = fetch_best_odds(event["id"], "h2h", sport_key)
+            sportsbook, odds = "FanDuel", random.choice(["-110", "-120", "+100", "+115"])
             try:
                 implied = american_to_implied(int(odds)) if odds != "N/A" else 50.0
             except:
@@ -149,11 +126,11 @@ def generate_black_ledger_picks():
             if tier_counts[tier] >= 3:
                 continue
 
-            pick = Pick(
+            db.session.add(Pick(
                 sport=sport_name.lower(),
                 tier=tier,
                 pick_text=f"{team_pick} to win",
-                summary=f"{team_pick} is the home team vs {away}. | " + " | ".join(context_flags),
+                summary=f"{team_pick} vs {away}",
                 confidence=confidence,
                 hit_chance=f"{model_chance:.0f}%",
                 sportsbook=sportsbook,
@@ -161,44 +138,46 @@ def generate_black_ledger_picks():
                 smartline_value=grade_smartline(edge),
                 public_fade_value=grade_public_fade(simulate_public_percentage(), model_chance),
                 created_at=datetime.utcnow()
-            )
-            db.session.add(pick)
+            ))
             tier_counts[tier] += 1
-            picks_added.append(pick)
 
+        # Create parlays
         for tier, legs_required in [("Safe", 2), ("Mid", 3), ("High", 5)]:
             for _ in range(3):
                 legs = []
+                decimal_total = 1.0
                 for i in range(legs_required):
+                    raw_odds = random.choice(["+110", "-120", "+135", "-105"])
+                    decimal_total *= american_to_decimal(raw_odds)
                     legs.append({
                         "team": f"Team {i+1}",
                         "type": random.choice(["Moneyline", "Spread", "Player Prop"]),
-                        "odds": random.choice(["+110", "-120", "+135", "-105"]),
+                        "odds": raw_odds,
                         "summary": f"Leg {i+1} has strong edge and matchup value."
                     })
+                final_odds = round((decimal_total - 1) * 100)
+                parlay_odds = f"+{final_odds}" if final_odds > 0 else str(final_odds)
 
-                parlay = BlackLedgerPick(
+                all_parlays.append(BlackLedgerPick(
                     sport=sport_name.lower(),
                     tier=tier,
                     bet_type="Mixed",
                     legs=json.dumps(legs),
                     hit_chance=f"{random.randint(78, 89)}%",
                     confidence=random.choice(["A", "A+", "B"]),
-                    summary="Built using matchup edges, form, and betting signals.",
+                    summary=f"Total Odds: {parlay_odds}",
                     created_at=datetime.utcnow()
-                )
-                all_parlays.append(parlay)
+                ))
 
     if all_parlays:
-        mystery = random.choice(all_parlays)
-        mystery.is_mystery = True
-        print(f"🎩 Mystery Pick set: {mystery.sport.title()} | {mystery.tier}")
+        random.choice(all_parlays).is_mystery = True
+        print("🎩 Mystery Pick assigned")
 
     for parlay in all_parlays:
         db.session.add(parlay)
 
     db.session.commit()
-    print(f"✅ All picks & {len(all_parlays)} parlays saved at {datetime.utcnow()} UTC")
+    print(f"✅ Saved {len(all_parlays)} parlays.")
 
 if __name__ == "__main__":
     with app.app_context():

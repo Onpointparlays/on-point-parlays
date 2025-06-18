@@ -3,69 +3,77 @@
 <head>
   <meta charset="UTF-8">
   <title>Today's Picks - On Point Parlays</title>
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
   <style>
     body {
-      font-family: 'Orbitron', sans-serif;
-      background-color: #000;
+      background-color: black;
       color: white;
+      font-family: 'Orbitron', sans-serif;
       margin: 0;
-      padding: 0;
+      padding-bottom: 80px;
     }
 
-    nav {
-      background: black;
-      border-bottom: 2px solid #FFD700;
-      padding: 12px 30px;
+    .nav-bar {
+      background-color: black;
+      border-bottom: 2px solid gold;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding: 10px 30px;
+      position: sticky;
+      top: 0;
+      z-index: 1000;
     }
 
-    nav a {
-      color: #FFD700;
+    .nav-bar a {
+      color: gold;
       text-decoration: none;
       margin: 0 15px;
-      font-size: 16px;
+      font-weight: bold;
     }
 
-    .nav-right {
-      display: flex;
-      align-items: center;
-    }
-
-    .container {
-      padding: 40px 20px;
+    h2.section-title {
+      margin-left: 20px;
+      color: gold;
+      font-size: 26px;
+      border-bottom: 2px solid gold;
+      padding-bottom: 5px;
+      margin-top: 50px;
     }
 
     .tier-title {
+      margin-left: 30px;
+      margin-top: 35px;
       font-size: 22px;
-      margin: 25px 0 10px;
       color: #FFD700;
     }
 
-    .sport-section {
-      margin-bottom: 40px;
+    .card-row {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-start;
+      gap: 30px;
+      padding: 20px 30px;
     }
 
     .flip-card {
-      background-color: transparent;
+      background: transparent;
       width: 300px;
-      height: auto;
+      height: 340px;
       perspective: 1000px;
-      margin: 20px;
-      display: inline-block;
+      flex-shrink: 0;
     }
 
     .flip-card-inner {
       position: relative;
       width: 100%;
-      transition: transform 0.8s;
+      height: 100%;
+      text-align: center;
+      transition: transform 0.8s ease;
       transform-style: preserve-3d;
     }
 
-    .flip-card:hover .flip-card-inner {
+    .flip-card.flipped .flip-card-inner {
       transform: rotateY(180deg);
     }
 
@@ -73,139 +81,134 @@
     .flip-card-back {
       position: absolute;
       width: 100%;
-      padding: 20px;
-      box-sizing: border-box;
+      height: 100%;
       border-radius: 10px;
       backface-visibility: hidden;
+      padding: 20px;
+      box-sizing: border-box;
+      overflow-y: auto;
     }
 
     .flip-card-front {
-      background-color: black;
-      color: white;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      border: 2px solid #FFD700;
+      background-color: #111;
+      border: 3px solid #FFD700;
     }
 
     .flip-card-back {
       background-color: #111;
-      color: white;
       transform: rotateY(180deg);
-      border: 2px solid #FFD700;
+      border: 3px solid #FFD700;
     }
 
-    .glow-safe { box-shadow: 0 0 10px 2px #FFD700; }
-    .glow-mid { box-shadow: 0 0 10px 2px #1E90FF; }
-    .glow-high { box-shadow: 0 0 10px 2px #FF4500; }
-
-    .parlay-leg {
+    .parlay-header {
+      font-size: 18px;
+      font-weight: bold;
+      color: gold;
       margin-bottom: 10px;
-      padding-left: 10px;
-      border-left: 2px solid #FFD700;
+    }
+
+    .leg {
+      text-align: left;
+      font-size: 14px;
+      margin-bottom: 10px;
     }
 
     .summary {
+      font-style: italic;
       font-size: 13px;
-      color: #ccc;
       margin-top: 10px;
+      color: #aaa;
     }
 
-    .tier-wrapper {
-      display: flex;
-      flex-wrap: wrap;
+    .safe-outline {
+      box-shadow: 0 0 10px 2px #FFD700;
     }
 
-    .login-reminder {
-      text-align: center;
-      margin: 100px auto;
-      font-size: 20px;
-      color: #FFD700;
+    .mid-outline {
+      box-shadow: 0 0 10px 2px #1E90FF;
     }
 
-    .sport-filters {
-      display: flex;
-      justify-content: center;
-      gap: 25px;
-      padding: 15px;
+    .high-outline {
+      box-shadow: 0 0 10px 2px #FF4500;
     }
 
-    .sport-filters a {
-      color: #FFD700;
-      font-size: 16px;
-      text-decoration: none;
-      border: 1px solid #FFD700;
-      padding: 6px 14px;
-      border-radius: 5px;
-    }
+    @media screen and (max-width: 768px) {
+      .card-row {
+        flex-wrap: nowrap;
+        overflow-x: auto;
+      }
 
-    h2 {
-      border-bottom: 2px solid #FFD700;
-      padding-bottom: 5px;
+      .flip-card {
+        flex: 0 0 auto;
+      }
     }
   </style>
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      document.querySelectorAll('.flip-card').forEach(card => {
+        card.addEventListener('click', () => {
+          card.classList.toggle('flipped');
+        });
+      });
+    });
+  </script>
 </head>
 <body>
 
-  <nav>
-    <div><a href="{{ url_for('home') }}">🏠 Home</a></div>
-    <div class="nav-right">
-      <a href="{{ url_for('profile') }}">👤 My Profile</a>
-      <a href="{{ url_for('logout') }}">🚪 Logout</a>
+  <div class="nav-bar">
+    <div>
+      <a href="/">🏠 Home</a>
+      <a href="/picks">Picks</a>
     </div>
-  </nav>
+    <div>
+      {% if session.get('user_logged_in') %}
+        <a href="/profile">👤 My Profile</a>
+        <a href="/logout">🚪 Logout</a>
+      {% else %}
+        <a href="/">Sign In</a>
+      {% endif %}
+    </div>
+  </div>
 
   {% if not logged_in %}
-    <div class="login-reminder">
-      🔒 Please <a href="{{ url_for('home') }}" style="color:#1E90FF;">log in</a> to view today’s picks.
-    </div>
+    <h2 style="text-align:center; color:red; margin-top:30px;">🔒 You must be signed in to view picks.</h2>
   {% else %}
-    <div class="sport-filters">
-      <a href="#nba">NBA</a>
-      <a href="#nfl">NFL</a>
-      <a href="#mlb">MLB</a>
-      <a href="#nhl">NHL</a>
-      <a href="#mixed">Mixed</a>
-    </div>
+    {% for sport, tiers in picks_by_sport.items() %}
+      {% if tiers.safe or tiers.mid or tiers.high %}
+        <h2 class="section-title">{{ sport.upper() }} Picks</h2>
 
-    <div class="container">
-      {% for sport, tiers in picks_by_sport.items() %}
-        {% set sport_display = sport.upper() %}
-        <div class="sport-section" id="{{ sport }}">
-          <h2>{{ sport_display }} Picks</h2>
-
-          {% for tier, picks in tiers.items() %}
-            {% if picks %}
-              <div class="tier-title">{{ tier|capitalize }} Tier</div>
-              <div class="tier-wrapper">
-                {% for pick in picks if pick.legs is defined %}
-                  {% set glow_class = "glow-safe" if tier == "safe" else "glow-mid" if tier == "mid" else "glow-high" %}
-                  <div class="flip-card">
-                    <div class="flip-card-inner">
-                      <div class="flip-card-front {{ glow_class }}">
-                        <h3>🔥 {{ tier|capitalize }} Parlay</h3>
-                        <p>Hit Chance: {{ pick.hit_chance }}</p>
-                        <p>Confidence: {{ pick.confidence }}</p>
-                      </div>
-                      <div class="flip-card-back">
-                        {% for leg in pick.legs %}
-                          <div class="parlay-leg">
-                            • <strong>{{ leg.team }}</strong> — {{ leg.type }} at {{ leg.odds }}<br>
-                            <small>{{ leg.summary }}</small>
-                          </div>
-                        {% endfor %}
-                        <div class="summary"><em>{{ pick.summary }}</em></div>
+        {% for tier, picks in tiers.items() %}
+          {% if picks %}
+            <div class="tier-title">{{ tier.title() }} Tier</div>
+            <div class="card-row">
+              {% for pick in picks %}
+                <div class="flip-card {{ tier.lower() }}-outline">
+                  <div class="flip-card-inner">
+                    <div class="flip-card-front">
+                      <div class="parlay-header">🔥 {{ tier.title() }} Parlay</div>
+                      <p>Click to view details</p>
+                    </div>
+                    <div class="flip-card-back">
+                      {% for leg in pick.legs %}
+                        <div class="leg">
+                          <strong>• {{ leg.team }}</strong> — {{ leg.type }}<br>
+                          {{ leg.summary }}
+                        </div>
+                      {% endfor %}
+                      <div class="summary">
+                        Hit Chance: {{ pick.hit_chance }}<br>
+                        Confidence: {{ pick.confidence }}<br>
+                        {{ pick.summary }}
                       </div>
                     </div>
                   </div>
-                {% endfor %}
-              </div>
-            {% endif %}
-          {% endfor %}
-        </div>
-      {% endfor %}
-    </div>
+                </div>
+              {% endfor %}
+            </div>
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% endfor %}
   {% endif %}
 
 </body>
