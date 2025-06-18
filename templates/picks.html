@@ -48,115 +48,12 @@
       color: #FFD700;
     }
 
-    .card-row {
-      display: flex;
-      justify-content: center;
-      gap: 40px;
-      flex-wrap: wrap;
-      padding: 20px 60px;
-    }
-
-    .flip-card {
-      background: transparent;
-      width: 300px;
-      height: 350px;
-      perspective: 1000px;
-      cursor: pointer;
-    }
-
-    .flip-card-inner {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      text-align: center;
-      transition: transform 0.8s ease;
-      transform-style: preserve-3d;
-    }
-
-    .flip-card.flipped .flip-card-inner {
-      transform: rotateY(180deg);
-    }
-
-    .flip-card-front,
-    .flip-card-back {
-      position: absolute;
-      width: 100%;
-      height: 100%;
-      border-radius: 12px;
-      backface-visibility: hidden;
-      padding: 20px;
-      box-sizing: border-box;
-      overflow-y: auto;
-    }
-
-    .flip-card-front {
-      background-color: #111;
-      border: 2px solid #FFD700;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .flip-card-back {
-      background-color: #111;
-      transform: rotateY(180deg);
-      border: 2px solid #FFD700;
-    }
-
-    .parlay-header {
-      font-size: 18px;
-      font-weight: bold;
-      color: gold;
-      margin-top: 5px;
-    }
-
-    .front-info {
-      font-size: 14px;
-      margin-top: 10px;
-    }
-
-    .sport-logo {
-      max-height: 60px;
-      margin-top: 10px;
-    }
-
-    .click-note {
-      font-size: 12px;
-      color: #aaa;
-      margin-top: auto;
-    }
-
-    .leg {
-      text-align: left;
-      font-size: 14px;
-      margin-bottom: 10px;
-    }
-
-    .summary {
-      font-style: italic;
-      font-size: 13px;
-      margin-top: 10px;
-      color: #aaa;
-    }
-
     .odds {
       font-size: 14px;
       font-weight: bold;
       color: gold;
-      margin-top: 12px;
-    }
-
-    .safe-outline {
-      box-shadow: 0 0 15px 3px #00ff88;
-    }
-
-    .mid-outline {
-      box-shadow: 0 0 15px 3px white;
-    }
-
-    .high-outline {
-      box-shadow: 0 0 15px 3px red;
+      margin-top: 10px;
+      text-align: center;
     }
   </style>
   <script>
@@ -218,7 +115,7 @@
                       {% endfor %}
                       <div class="summary">{{ pick.summary }}</div>
                       {% if pick.best_odds %}
-                        <div class="odds">Best Odds: {{ pick.best_odds }} ({{ pick.best_sportsbook }})</div>
+                        <div class="best-odds">Best Odds: {{ pick.best_odds }} ({{ pick.best_sportsbook }})</div>
                       {% endif %}
                     </div>
                   </div>
