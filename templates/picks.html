@@ -51,21 +51,17 @@
     .card-row {
       display: flex;
       flex-wrap: wrap;
-      justify-content: center;
+      justify-content: flex-start;
       gap: 40px;
-      padding: 20px 80px;
-      max-width: 1600px;
-      margin-left: auto;
-      margin-right: auto;
+      padding: 20px 60px;
     }
 
     .flip-card {
       background: transparent;
-      width: 220px;
-      height: 340px;
+      width: 200px;
+      height: 320px;
       perspective: 1000px;
       cursor: pointer;
-      border-radius: 18px;
     }
 
     .flip-card-inner {
@@ -86,7 +82,7 @@
       position: absolute;
       width: 100%;
       height: 100%;
-      border-radius: 18px;
+      border-radius: 12px;
       backface-visibility: hidden;
       padding: 20px;
       box-sizing: border-box;
@@ -98,7 +94,7 @@
       border: 2px solid #FFD700;
       display: flex;
       flex-direction: column;
-      justify-content: flex-start;
+      justify-content: space-between;
       align-items: center;
     }
 
@@ -112,25 +108,31 @@
       font-size: 16px;
       font-weight: bold;
       color: gold;
-      margin-top: 12px;
+      margin-top: 5px;
+    }
+
+    .sport-logo {
+      max-height: 45px;
+      margin-top: 10px;
     }
 
     .front-info {
       font-size: 13px;
-      margin-top: 14px;
-      color: #fff;
+      margin-top: 8px;
+      color: white;
     }
 
-    .sport-logo {
-      max-height: 50px;
-      margin-top: 10px;
+    .front-odds {
+      font-size: 13px;
+      margin-top: 6px;
+      color: #FFD700;
+      cursor: help;
     }
 
     .click-note {
       font-size: 12px;
       color: #aaa;
       margin-top: auto;
-      margin-bottom: 10px;
     }
 
     .leg {
@@ -205,6 +207,9 @@
                       <div class="front-info">
                         Hit Chance: {{ pick.hit_chance }}<br>
                         Confidence: {{ pick.confidence }}
+                      </div>
+                      <div class="front-odds" title="Best odds pulled from FanDuel and DraftKings">
+                        Best Odds: +274 (FanDuel)
                       </div>
                       <div class="click-note">Click to view details</div>
                     </div>
