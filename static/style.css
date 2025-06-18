@@ -130,12 +130,12 @@ button:hover {
 }
 
 .card-front {
-    justify-content: space-between;
+    justify-content: flex-start;
 }
 
 .card-front img {
     width: 45px;
-    margin-top: 5px;
+    margin-top: 10px;
 }
 
 .card-front h3 {
@@ -160,6 +160,64 @@ button:hover {
     color: #ccc;
     margin-top: auto;
     padding-top: 5px;
+}
+
+/* Front updates */
+.flip-card {
+    background: transparent;
+    width: 220px;
+    height: 340px;
+    perspective: 1000px;
+    cursor: pointer;
+    border-radius: 18px;
+}
+
+.card-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 40px;
+    padding: 30px 80px;
+    max-width: 1600px;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.flip-card-front {
+    background-color: #111;
+    border: 2px solid #FFD700;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    padding: 20px;
+    border-radius: 18px;
+}
+
+.sport-logo {
+    width: 50px;
+    margin: 10px auto;
+}
+
+.parlay-header {
+    font-size: 16px;
+    font-weight: bold;
+    color: #FFD700;
+    margin-top: 10px;
+}
+
+.front-info {
+    margin-top: 15px;
+    font-size: 13px;
+    color: #fff;
+    line-height: 1.4;
+}
+
+.click-note {
+    font-size: 12px;
+    color: #aaa;
+    margin-top: auto;
+    margin-bottom: 10px;
 }
 
 /* Back of Card */
