@@ -68,8 +68,8 @@ def adjust_for_context(model_chance, is_home):
     model_chance = max(45, min(95, model_chance))
     return round(model_chance, 1), context_log
 
-def fetch_best_odds(event_id, market):
-    url = f"{BASE_URL}/baseball_mlb/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
+def fetch_best_odds(event_id, market, sport_key):
+    url = f"{BASE_URL}/{sport_key}/events/{event_id}/odds/?apiKey={API_KEY}&regions=us&markets={market}&oddsFormat=american"
     response = requests.get(url)
     if response.status_code != 200:
         return "Unavailable", "N/A"
@@ -107,7 +107,7 @@ def generate_black_ledger_picks():
         today_events = [
             e for e in events
             if "commence_time" in e
-            and today == datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc).date()
+            and datetime.fromisoformat(e["commence_time"].replace("Z", "+00:00")).astimezone(utc).date() == today
         ]
 
         print(f"⏳ {len(today_events)} {sport_name} games scheduled for today.")
@@ -118,6 +118,7 @@ def generate_black_ledger_picks():
         used_indices = set()
         tier_targets = {"Safe": 3, "Mid": 3, "High": 3}
         tier_counts = {"Safe": 0, "Mid": 0, "High": 0}
+        picks_added = []
 
         while sum(tier_counts.values()) < 9 and len(used_indices) < len(today_events):
             idx = random.randint(0, len(today_events) - 1)
@@ -134,7 +135,7 @@ def generate_black_ledger_picks():
             team_pick = home
             is_home = True
 
-            sportsbook, odds = fetch_best_odds(event["id"], "h2h")
+            sportsbook, odds = fetch_best_odds(event["id"], "h2h", sport_key)
             try:
                 implied = american_to_implied(int(odds)) if odds != "N/A" else 50.0
             except:
@@ -163,8 +164,8 @@ def generate_black_ledger_picks():
             )
             db.session.add(pick)
             tier_counts[tier] += 1
+            picks_added.append(pick)
 
-        # 🎯 Parlay Creation
         for tier, legs_required in [("Safe", 2), ("Mid", 3), ("High", 5)]:
             for _ in range(3):
                 legs = []

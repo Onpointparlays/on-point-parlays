@@ -1,11 +1,9 @@
 from flask import Flask, render_template, request, redirect, session, url_for, flash
 from models import db, User, Pick, BlackLedgerPick
 from werkzeug.security import generate_password_hash, check_password_hash
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 from sqlalchemy import func
 import os
-import requests
-import random
 import json
 from generate_picks import generate_black_ledger_picks
 
@@ -171,7 +169,6 @@ def internal_refresh():
     except Exception as e:
         return f"❌ Error during internal refresh: {str(e)}", 500
 
-# ✅ TEMPORARY: Drop and recreate DB schema for Render (to fix missing columns)
 @app.route('/drop-and-recreate-blp', methods=['POST'])
 def drop_and_recreate_blp():
     if request.headers.get("X-Admin-Secret") != "letmein":
