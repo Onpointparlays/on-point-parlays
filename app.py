@@ -171,6 +171,16 @@ def internal_refresh():
     except Exception as e:
         return f"❌ Error during internal refresh: {str(e)}", 500
 
+# ✅ TEMPORARY: Drop and recreate DB schema for Render (to fix missing columns)
+@app.route('/drop-and-recreate-blp', methods=['POST'])
+def drop_and_recreate_blp():
+    if request.headers.get("X-Admin-Secret") != "letmein":
+        return "❌ Unauthorized", 403
+    with app.app_context():
+        db.drop_all()
+        db.create_all()
+    return "✅ Database schema dropped and recreated."
+
 # ========================
 # LOCAL DEV INIT
 # ========================
