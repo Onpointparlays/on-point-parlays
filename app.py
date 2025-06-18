@@ -169,10 +169,9 @@ def internal_refresh():
     except Exception as e:
         return f"❌ Error during internal refresh: {str(e)}", 500
 
-@app.route('/drop-and-recreate-blp', methods=['POST'])
+# ✅ TEMPORARY: Allow GET for DB recreation without secret
+@app.route('/drop-and-recreate-blp', methods=['GET', 'POST'])
 def drop_and_recreate_blp():
-    if request.headers.get("X-Admin-Secret") != "letmein":
-        return "❌ Unauthorized", 403
     with app.app_context():
         db.drop_all()
         db.create_all()
