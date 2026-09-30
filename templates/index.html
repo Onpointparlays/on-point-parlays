@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>On Point Parlays</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="/" class="logo">On Point Parlays</a>
+        </div>
+        <div class="nav-right">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/picks" class="nav-link">Picks</a>
+            <a href="/admin" class="nav-link admin-link">Admin</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <main class="hero">
+        <div class="hero-content">
+            <p class="eyebrow">Daily Sports Picks • Clear Research</p>
+            
+            <h1>
+                Sharp picks.<br>
+                <span class="highlight">Clear reasoning.</span>
+            </h1>
+            
+            <p class="hero-text">
+                On Point Parlays delivers the strongest individual plays of the day across the major sports. 
+                Every pick comes with the research and reasoning behind it — no parlays, no fluff, just the plays worth looking at.
+            </p>
+
+            <div class="hero-buttons">
+                <a href="/picks" class="btn-primary">View Today's Picks</a>
+            </div>
+
+            <div class="sports-list">
+                <span>NFL</span>
+                <span>NBA</span>
+                <span>WNBA</span>
+                <span>CFB</span>
+                <span>NHL</span>
+                <span>MLB</span>
+            </div>
+        </div>
+    </main>
+
+    <!-- Simple feature cards -->
+    <section class="features">
+        <div class="feature-card">
+            <div class="feature-icon">01</div>
+            <h3>Individual Picks</h3>
+            <p>We post the best single plays of the day — moneylines, spreads, totals, and player props.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">02</div>
+            <h3>Full Research</h3>
+            <p>Every pick includes the reasoning so you understand exactly why it was selected.</p>
+        </div>
+        <div class="feature-card">
+            <div class="feature-icon">03</div>
+            <h3>Clean History</h3>
+            <p>Past picks are saved and easy to browse by date — never a messy long list.</p>
+        </div>
+    </section>
+
+    <footer class="footer">
+        <p>On Point Parlays &copy; 2026</p>
+    </footer>
+</body>
+</html>

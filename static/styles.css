@@ -1,0 +1,414 @@
+/* ===========================
+   On Point Parlays - Main Styles
+   =========================== */
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    background-color: #0a0a0a;
+    color: #e5e5e5;
+    line-height: 1.6;
+    min-height: 100vh;
+}
+
+/* ---------- Navbar ---------- */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.25rem 2rem;
+    background-color: rgba(10, 10, 10, 0.95);
+    border-bottom: 1px solid #1f1f1f;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logo {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #ffffff;
+    text-decoration: none;
+    letter-spacing: -0.02em;
+}
+
+.logo:hover {
+    color: #4ade80;
+}
+
+.nav-right {
+    display: flex;
+    gap: 1.5rem;
+    align-items: center;
+}
+
+.nav-link {
+    color: #a3a3a3;
+    text-decoration: none;
+    font-size: 0.95rem;
+    font-weight: 500;
+    transition: color 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    color: #4ade80;
+}
+
+/* Make the Admin link very subtle */
+.admin-link {
+    color: #525252 !important;
+    font-size: 0.85rem;
+}
+
+.admin-link:hover {
+    color: #737373 !important;
+}
+
+/* ---------- Hero (Homepage) ---------- */
+.hero {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 5rem 2rem 4rem;
+    text-align: center;
+}
+
+.eyebrow {
+    display: inline-block;
+    background: rgba(74, 222, 128, 0.1);
+    color: #4ade80;
+    font-size: 0.85rem;
+    font-weight: 600;
+    padding: 0.4rem 1rem;
+    border-radius: 999px;
+    margin-bottom: 1.5rem;
+    letter-spacing: 0.02em;
+}
+
+.hero h1 {
+    font-size: 3.4rem;
+    font-weight: 800;
+    line-height: 1.15;
+    color: #ffffff;
+    margin-bottom: 1.5rem;
+    letter-spacing: -0.03em;
+}
+
+.hero h1 .highlight {
+    color: #4ade80;
+}
+
+.hero-text {
+    font-size: 1.15rem;
+    color: #a3a3a3;
+    max-width: 620px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.7;
+}
+
+.hero-buttons {
+    margin-bottom: 3rem;
+}
+
+.btn-primary {
+    display: inline-block;
+    background-color: #4ade80;
+    color: #0a0a0a;
+    font-weight: 600;
+    font-size: 1rem;
+    padding: 0.9rem 2rem;
+    border-radius: 8px;
+    text-decoration: none;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.15s;
+}
+
+.btn-primary:hover {
+    background-color: #22c55e;
+    transform: translateY(-1px);
+}
+
+.sports-list {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+}
+
+.sports-list span {
+    color: #737373;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.04em;
+}
+
+/* ---------- Feature Cards ---------- */
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto 5rem;
+    padding: 0 2rem;
+}
+
+.feature-card {
+    background-color: #141414;
+    border: 1px solid #1f1f1f;
+    border-radius: 12px;
+    padding: 1.75rem;
+}
+
+.feature-icon {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #4ade80;
+    margin-bottom: 0.75rem;
+}
+
+.feature-card h3 {
+    font-size: 1.15rem;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+    color: #a3a3a3;
+    font-size: 0.95rem;
+}
+
+/* ---------- Picks Page ---------- */
+.picks-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+}
+
+.picks-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.picks-header h1 {
+    font-size: 2.4rem;
+    font-weight: 800;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.picks-header .subtitle {
+    color: #a3a3a3;
+    font-size: 1.05rem;
+}
+
+.date-selector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+}
+
+.date-selector label {
+    color: #a3a3a3;
+    font-size: 0.95rem;
+}
+
+.date-selector select {
+    background-color: #141414;
+    color: #e5e5e5;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 0.6rem 1rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    cursor: pointer;
+}
+
+.date-selector select:focus {
+    outline: none;
+    border-color: #4ade80;
+}
+
+.picks-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.sport-card {
+    background-color: #141414;
+    border: 1px solid #1f1f1f;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.sport-header {
+    background-color: #1a1a1a;
+    padding: 0.9rem 1.25rem;
+    border-bottom: 1px solid #1f1f1f;
+}
+
+.sport-header h2 {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4ade80;
+    letter-spacing: 0.03em;
+}
+
+.sport-content {
+    padding: 1.25rem;
+}
+
+.pick-text {
+    font-family: inherit;
+    font-size: 0.95rem;
+    color: #e5e5e5;
+    white-space: pre-wrap;
+    line-height: 1.65;
+    margin: 0;
+}
+
+.no-picks {
+    color: #737373;
+    font-size: 0.95rem;
+    font-style: italic;
+}
+
+/* ---------- Admin Page ---------- */
+.admin-page {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: 3rem 2rem 5rem;
+}
+
+.login-box {
+    background-color: #141414;
+    border: 1px solid #1f1f1f;
+    border-radius: 12px;
+    padding: 2.5rem;
+    text-align: center;
+}
+
+.login-box h1 {
+    font-size: 1.6rem;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+}
+
+.login-box p {
+    color: #a3a3a3;
+    margin-bottom: 1.75rem;
+}
+
+.login-box input[type="password"] {
+    width: 100%;
+    background-color: #0a0a0a;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    color: #e5e5e5;
+    font-size: 1rem;
+    margin-bottom: 1.25rem;
+    font-family: inherit;
+}
+
+.login-box input[type="password"]:focus {
+    outline: none;
+    border-color: #4ade80;
+}
+
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.admin-header h1 {
+    font-size: 1.8rem;
+    color: #ffffff;
+}
+
+.logout-btn {
+    color: #737373;
+    font-size: 0.9rem;
+    text-decoration: none;
+}
+
+.logout-btn:hover {
+    color: #ef4444;
+}
+
+.admin-form .form-group {
+    margin-bottom: 1.5rem;
+}
+
+.admin-form label {
+    display: block;
+    font-weight: 600;
+    color: #e5e5e5;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+}
+
+.admin-form input[type="date"],
+.admin-form textarea {
+    width: 100%;
+    background-color: #141414;
+    border: 1px solid #2a2a2a;
+    border-radius: 8px;
+    padding: 0.85rem 1rem;
+    color: #e5e5e5;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+}
+
+.admin-form input[type="date"]:focus,
+.admin-form textarea:focus {
+    outline: none;
+    border-color: #4ade80;
+}
+
+.admin-form textarea {
+    min-height: 120px;
+}
+
+.full-width {
+    width: 100%;
+    margin-top: 0.5rem;
+}
+
+/* ---------- Footer ---------- */
+.footer {
+    text-align: center;
+    padding: 2rem;
+    color: #525252;
+    font-size: 0.85rem;
+    border-top: 1px solid #1f1f1f;
+}
+
+/* ---------- Responsive ---------- */
+@media (max-width: 640px) {
+    .hero h1 {
+        font-size: 2.4rem;
+    }
+    
+    .navbar {
+        padding: 1rem 1.25rem;
+    }
+    
+    .picks-page,
+    .admin-page,
+    .hero {
+        padding-left: 1.25rem;
+        padding-right: 1.25rem;
+    }
+}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Picks – On Point Parlays</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Top Navigation -->
+    <nav class="navbar">
+        <div class="nav-left">
+            <a href="/" class="logo">On Point Parlays</a>
+        </div>
+        <div class="nav-right">
+            <a href="/" class="nav-link">Home</a>
+            <a href="/picks" class="nav-link active">Picks</a>
+            <a href="/admin" class="nav-link admin-link">Admin</a>
+        </div>
+    </nav>
+
+    <main class="picks-page">
+        <div class="picks-header">
+            <h1>Daily Picks</h1>
+            <p class="subtitle">Individual plays with full research behind every selection.</p>
+        </div>
+
+        <!-- Date Selector -->
+        <div class="date-selector">
+            <label for="date-select">View picks for:</label>
+            <select id="date-select" onchange="window.location.href='/picks?date=' + this.value">
+                {% if available_dates %}
+                    {% for d in available_dates %}
+                        <option value="{{ d }}" {% if d == selected_date %}selected{% endif %}>
+                            {{ d }}
+                        </option>
+                    {% endfor %}
+                {% else %}
+                    <option value="{{ selected_date }}">{{ selected_date }}</option>
+                {% endif %}
+            </select>
+        </div>
+
+        <!-- Picks by Sport -->
+        <div class="picks-grid">
+            {% for sport in sports %}
+                <div class="sport-card">
+                    <div class="sport-header">
+                        <h2>{{ sport }}</h2>
+                    </div>
+                    <div class="sport-content">
+                        {% if day_picks.get(sport) %}
+                            <pre class="pick-text">{{ day_picks.get(sport) }}</pre>
+                        {% else %}
+                            <p class="no-picks">No picks posted for this sport.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </main>
+
+    <footer class="footer">
+        <p>On Point Parlays &copy; 2026</p>
+    </footer>
+</body>
+</html>
